@@ -1,111 +1,415 @@
-<!-- index.html -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FindMyACLC — Lost & Found</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Firebase SDKs (modular) -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-storage-compat.js"></script>
+  <title>FindMyACLC — Lost & Found (Demo)</title>
+
+  <!-- Styles adapted from your Profiletyles.css -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{background:#f6f7fb;padding:20px;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;}
+    .app{width:100%;max-width:1100px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(8,20,40,0.06);overflow:hidden;}
+    header{display:flex;align-items:center;gap:18px;padding:18px 22px;border-bottom:1px solid #f0f0f3}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#6a00ff,#007bff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    h1{font-size:18px;color:#101010}
+    .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+    .btn{background:#6a00ff;color:#fff;padding:8px 12px;border-radius:9px;text-decoration:none;font-weight:600;border:none;cursor:pointer}
+    .btn.ghost{background:transparent;color:#6a00ff;border:1px solid #e9e5ff}
+    .layout{display:grid;grid-template-columns:360px 1fr;border-top:1px solid #f0f0f3}
+    /* Sidebar */
+    .sidebar{padding:18px;min-height:560px;border-right:1px solid #f5f6fa;background:#fbfbff}
+    .search-box{display:flex;gap:8px;margin-bottom:14px}
+    .search-box input{flex:1;padding:10px;border-radius:9px;border:1px solid #e9e9f0}
+    .filters label{display:block;margin:10px 0 6px;color:#555;font-size:13px}
+    .filters select,input[type="date"]{width:100%;padding:8px;border-radius:8px;border:1px solid #eee}
+    .small-note{font-size:12px;color:#888;margin-top:10px}
+    /* Main */
+    .main{padding:18px}
+    .controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+    .card{background:#fff;border-radius:10px;padding:12px;border:1px solid #f1f1f6}
+    .card h3{font-size:15px;margin-bottom:6px}
+    .card p{font-size:13px;color:#555;margin-bottom:8px}
+    .meta{font-size:12px;color:#999}
+    .badge{display:inline-block;padding:6px 8px;border-radius:8px;font-weight:600}
+    .badge.found{background:#e6ffef;color:#0b6d3a}
+    .badge.lost{background:#fff3e6;color:#8a4a00}
+    /* Forms */
+    .form{display:grid;gap:8px;background:#fbfbff;padding:12px;border-radius:10px;border:1px dashed #eee;margin-bottom:12px}
+    .form input,.form textarea{padding:8px;border-radius:8px;border:1px solid #eee}
+    .form textarea{min-height:80px;resize:vertical}
+    /* Chat UI (floating) - based on your chat styles */
+    .chat-bubble{position:fixed;right:25px;bottom:25px;width:56px;height:56px;border-radius:50%;background:linear-gradient(180deg,#6a00ff,#007bff);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 24px rgba(106,0,255,0.18);z-index:999}
+    .chat-window{position:fixed;right:25px;bottom:96px;width:360px;height:520px;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(10,30,70,0.12);display:flex;flex-direction:column;overflow:hidden;z-index:999;transform:translateY(0);opacity:1}
+    .chat-header{background:linear-gradient(90deg,#6a00ff,#007bff);padding:12px;color:#fff;display:flex;align-items:center;justify-content:space-between}
+    .chat-messages{flex:1;padding:12px;overflow-y:auto;background:#fbfbff}
+    .chat-input{display:flex;padding:12px;border-top:1px solid #f1f1f5}
+    .chat-input input{flex:1;padding:10px;border-radius:10px;border:1px solid #eee}
+    .chat-msg{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;font-size:13px;line-height:1.3}
+    .chat-msg.user{background:linear-gradient(180deg,#6a00ff,#5a00e6);color:#fff;margin-left:auto}
+    .chat-msg.ai{background:#eef2ff;color:#101010;margin-right:auto}
+    .typing{display:flex;gap:6px;align-items:center}
+    .typing span{width:7px;height:7px;background:#6a00ff;border-radius:50%;animation:typing 1.2s infinite}
+    @keyframes typing{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+    /* small helpers */
+    .muted{color:#777;font-size:13px}
+    footer{padding:10px 18px;border-top:1px solid #fafafa;font-size:13px;color:#666;background:#fff}
+    @media (max-width:900px){.layout{grid-template-columns:1fr;}.sidebar{order:2;border-right:none;border-top:1px solid #f5f6fa}}
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="brand">
-      <h1>FindMyACLC</h1>
-      <p class="tag">Lost & Found — quick, secure, and staff-reviewed</p>
-    </div>
-    <div class="auth-actions">
-      <span id="userEmail" class="user-email"></span>
-      <button id="loginBtn" class="btn outline">Login</button>
-      <button id="registerBtn" class="btn outline">Register</button>
-      <button id="logoutBtn" class="btn hidden">Logout</button>
-    </div>
-  </header>
+  <div class="app" role="application" aria-label="FindMyACLC demo">
+    <header>
+      <div class="brand">
+        <div class="logo">ACLC</div>
+        <div>
+          <h1>FindMyACLC — Lost & Found</h1>
+          <div class="muted">Student-centered lost & found demo (client-side)</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="openReportFound" class="btn">Report Found</button>
+        <button id="openReportLost" class="btn ghost">Report Lost</button>
+        <button id="adminToggle" class="btn ghost">Admin</button>
+      </div>
+    </header>
 
-  <main class="main">
-    <section class="search-section">
-      <input id="searchInput" placeholder="Search recent found items (e.g., phone, keys, water bottle)" />
-      <button id="searchBtn" class="btn">Search</button>
-      <button id="refreshBtn" class="btn ghost">Refresh</button>
-    </section>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" aria-label="Filters">
+        <div class="search-box">
+          <input id="q" placeholder="Search (e.g. black bottle, phone)" aria-label="search">
+          <button id="searchBtn" class="btn">Search</button>
+        </div>
 
-    <section class="controls">
-      <button id="reportFoundBtn" class="btn">Report Found Item</button>
-      <button id="myReportsBtn" class="btn ghost">My Reports</button>
-    </section>
-
-    <section id="itemsList" class="items-list">
-      <!-- JS fills with found item cards -->
-    </section>
-
-    <div class="pagination">
-      <button id="prevBtn" class="btn ghost" disabled>Previous</button>
-      <button id="nextBtn" class="btn ghost">Next</button>
-    </div>
-  </main>
-
-  <!-- Login Modal -->
-  <div id="modalOverlay" class="modal-overlay hidden">
-    <div class="modal">
-      <button id="closeModal" class="modal-close">&times;</button>
-
-      <div id="authForms">
-        <h3 id="modalTitle">Login</h3>
-
-        <form id="loginForm" class="form">
-          <input id="loginEmail" type="email" placeholder="Email" required />
-          <input id="loginPassword" type="password" placeholder="Password" required />
-          <button type="submit" class="btn">Login</button>
-        </form>
-
-        <form id="registerForm" class="form hidden">
-          <input id="regEmail" type="email" placeholder="Email" required />
-          <input id="regPassword" type="password" placeholder="Password (min 6)" minlength="6" required />
-          <select id="regRole">
-            <option value="student">Student</option>
-            <option value="staff">Staff</option>
+        <div class="filters">
+          <label>Category</label>
+          <select id="filterCategory">
+            <option value="">Any</option>
+            <option value="electronics">Electronics</option>
+            <option value="accessories">Accessories</option>
+            <option value="clothing">Clothing</option>
+            <option value="other">Other</option>
           </select>
-          <button type="submit" class="btn">Register</button>
-        </form>
-      </div>
 
-      <!-- Report Found (in same modal, shown when reporting) -->
-      <div id="reportFormWrap" class="hidden">
-        <h3>Report Found Item</h3>
-        <form id="reportForm" class="form">
-          <input id="itemTitle" placeholder="Title (e.g., Black Water Bottle)" required />
-          <textarea id="itemDesc" placeholder="Short description" rows="3"></textarea>
-          <input id="itemLocation" placeholder="Location (e.g., Library, Cafeteria)" />
-          <input id="dateFound" type="date" />
-          <input id="itemImage" type="file" accept="image/*" />
-          <button type="submit" class="btn">Submit Report</button>
-        </form>
-      </div>
+          <label>Date</label>
+          <input id="filterDate" type="date">
+
+          <div class="small-note">This is a demo: items are stored in your browser only (localStorage).</div>
+        </div>
+
+        <hr style="margin:12px 0;border:none;border-top:1px dashed #eee">
+
+        <div>
+          <h4 style="font-size:14px;margin-bottom:8px">My Reports</h4>
+          <div id="myReports" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="main" role="main">
+        <div class="controls">
+          <div class="muted">Showing <strong id="count">0</strong> items</div>
+          <div style="margin-left:auto" class="muted">Tip: Click an item to start claim verification</div>
+        </div>
+
+        <section>
+          <div id="cards" class="cards" aria-live="polite"></div>
+        </section>
+
+        <section style="margin-top:12px">
+          <div class="form" id="reportFoundForm" style="display:none">
+            <h4>Report Found Item</h4>
+            <input id="foundTitle" placeholder="Title (e.g. Black water bottle)">
+            <input id="foundCategory" placeholder="Category">
+            <input id="foundLocation" placeholder="Location found (e.g. Library)">
+            <textarea id="foundDescription" placeholder="Describe the item (include unique marks)"></textarea>
+            <button id="submitFound" class="btn">Submit Found (demo)</button>
+          </div>
+
+          <div class="form" id="reportLostForm" style="display:none">
+            <h4>Report Lost Item (staff only in production)</h4>
+            <input id="lostTitle" placeholder="Title (e.g. Samsung A10)">
+            <input id="lostCategory" placeholder="Category">
+            <input id="lostLocation" placeholder="Last seen (e.g. Cafeteria)">
+            <textarea id="lostDescription" placeholder="Describe the item (unique details)"></textarea>
+            <button id="submitLost" class="btn">Submit Lost (demo)</button>
+          </div>
+        </section>
+
+        <section style="margin-top:14px">
+          <div class="form" id="claimPane" style="display:none">
+            <h4>Attempt Claim</h4>
+            <div id="claimPrompt" class="muted">Answer the confidential question to claim this item.</div>
+            <input id="claimAnswer" placeholder="Your answer">
+            <button id="submitClaim" class="btn">Submit Claim</button>
+            <div id="claimStatus" style="margin-top:8px;font-size:13px"></div>
+          </div>
+        </section>
+      </main>
     </div>
+
+    <footer>Built from your UI reference & planning doc. This demo stores data locally only. Replace client-demo parts with Firestore + backend for production.</footer>
   </div>
 
-  <!-- Chat Bubble + Chat Window -->
-  <div id="chatBubble" class="chat-bubble" title="Ask the assistant">💬</div>
-  <div id="chatWindow" class="chat-window hidden">
+  <!-- Floating Chat UI (client-side assistant) -->
+  <div class="chat-bubble" id="chatBubble" role="button" aria-label="Open assistant">💬</div>
+
+  <div class="chat-window" id="chatWindow" style="display:none" role="dialog" aria-label="Assistant">
     <div class="chat-header">
-      <h3>FindMyACLC Assistant</h3>
-      <button id="minimizeChat" class="btn small">−</button>
+      <div>FindMyACLC Assistant</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="minChat" class="btn ghost" title="Minimize" style="padding:6px 8px">−</button>
+        <button id="closeChat" class="btn ghost" title="Close" style="padding:6px 8px">×</button>
+      </div>
     </div>
-    <div id="chatMessages" class="chat-messages"></div>
+
+    <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+
     <div class="chat-input">
-      <input id="chatInput" placeholder="Ask about lost & found (e.g., I lost a blue umbrella near the library)" />
-      <button id="sendChat" class="btn">Send</button>
+      <input id="chatInput" placeholder="Ask about reporting, items, or claiming..." aria-label="Chat input">
+      <button id="sendChat" class="btn">➤</button>
     </div>
   </div>
 
-  <footer class="site-footer">
-    <small>FindMyACLC — contact staff for urgent claims. This site stores minimal user data.</small>
-  </footer>
+  <!-- App logic (all client-side demo) -->
+  <script>
+    /*****************************************************************
+     * Demo single-file FindMyACLC
+     * - Uses localStorage to persist demo items
+     * - Chat assistant is simulated (will point to staff/contact)
+     * - Claim verification is mocked with a stored 'secret answer'
+     *
+     * NOTE: For production use Firestore + server verification + real AI via a secure server/worker
+     *****************************************************************/
 
-  <script src="script.js" type="module"></script>
+    /* --- Utilities & initial demo data --- */
+    const STORAGE_KEY = 'findmyaclc_demo_items_v1';
+
+    function uid(){ return 'id_' + Math.random().toString(36).slice(2,9); }
+    function now(){ return new Date().toISOString(); }
+
+    // Seed demo items if none
+    function seedDemo(){
+      if(!localStorage.getItem(STORAGE_KEY)){
+        const demo = [
+          { id:uid(), type:'found', title:'Black water bottle', category:'accessories', location:'Library table 3', desc:'Matte black bottle with sticker "SKY"', date:now(), secretQ:'What is the sticker text?', secretA:'SKY', postedBy:'student', claimed:false },
+          { id:uid(), type:'found', title:'White earphones', category:'electronics', location:'Cafeteria', desc:'Left earbud has blue tape', date:now(), secretQ:'Which earbud has tape?', secretA:'left', postedBy:'staff', claimed:false },
+          { id:uid(), type:'lost', title:'Samsung A10', category:'electronics', location:'Last seen cafeteria', desc:'Blue case, screen protector cracked', date:now(), secretQ:'What color is the case?', secretA:'blue', postedBy:'student', claimed:false }
+        ];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
+      }
+    }
+
+    seedDemo();
+
+    function getItems(){
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+    function saveItems(items){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    /* --- Rendering --- */
+    const cardsEl = document.getElementById('cards');
+    const countEl = document.getElementById('count');
+    const qEl = document.getElementById('q');
+    const filterCategory = document.getElementById('filterCategory');
+    const filterDate = document.getElementById('filterDate');
+
+    function render(){
+      const items = getItems();
+      const q = (qEl.value || '').toLowerCase().trim();
+      const category = filterCategory.value;
+      const fdate = filterDate.value;
+      let shown = items.filter(i=>{
+        if(category && i.category.toLowerCase() !== category.toLowerCase()) return false;
+        if(fdate && i.date.slice(0,10) !== fdate) return false;
+        if(q){
+          const hay = (i.title+' '+i.desc+' '+i.location).toLowerCase();
+          return hay.includes(q);
+        }
+        return true;
+      });
+      countEl.textContent = shown.length;
+      cardsEl.innerHTML = '';
+      shown.forEach(item=>{
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <h3>${escapeHtml(item.title)}</h3>
+            <div class="meta">${new Date(item.date).toLocaleString()}</div>
+          </div>
+          <div style="margin:8px 0">
+            <span class="badge ${item.type==='found'?'found':'lost'}">${item.type.toUpperCase()}</span>
+            <span style="margin-left:8px" class="muted">${escapeHtml(item.category)} • ${escapeHtml(item.location)}</span>
+          </div>
+          <p>${escapeHtml(item.desc)}</p>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn" data-id="${item.id}" data-action="view">View</button>
+            <button class="btn ghost" data-id="${item.id}" data-action="claim">Attempt Claim</button>
+          </div>
+        `;
+        cardsEl.appendChild(card);
+      });
+      renderMyReports();
+      attachCardHandlers();
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+    function attachCardHandlers(){
+      cardsEl.querySelectorAll('button').forEach(btn=>{
+        btn.onclick = (e)=>{
+          const id = btn.getAttribute('data-id');
+          const action = btn.getAttribute('data-action');
+          const item = getItems().find(x=>x.id===id);
+          if(action==='view') return alert(`Item: ${item.title}\n\nLocation: ${item.location}\n\nDesc: ${item.desc}\n\nConfidential Q: ${item.secretQ}`);
+          if(action==='claim') return startClaim(item);
+        };
+      });
+    }
+
+    function renderMyReports(){
+      const myReports = document.getElementById('myReports');
+      const mine = getItems().filter(i=>i.postedBy==='student');
+      myReports.innerHTML = mine.length ? mine.map(i=>`<div style="padding:8px;border-radius:8px;background:#fff;border:1px solid #f3f3f8"><strong>${escapeHtml(i.title)}</strong><div class="muted" style="font-size:12px">${escapeHtml(i.type)} • ${new Date(i.date).toLocaleDateString()}</div></div>`).join('') : '<div class="muted">No reports yet</div>';
+    }
+
+    /* --- Reports (demo) --- */
+    document.getElementById('openReportFound').addEventListener('click', ()=>{ toggleForms('found'); });
+    document.getElementById('openReportLost').addEventListener('click', ()=>{ toggleForms('lost'); });
+
+    function toggleForms(which){
+      document.getElementById('reportFoundForm').style.display = (which==='found')?'block':'none';
+      document.getElementById('reportLostForm').style.display = (which==='lost')?'block':'none';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    document.getElementById('submitFound').addEventListener('click', ()=>{
+      const title = document.getElementById('foundTitle').value.trim();
+      const cat = document.getElementById('foundCategory').value.trim() || 'other';
+      const loc = document.getElementById('foundLocation').value.trim() || 'unknown';
+      const desc = document.getElementById('foundDescription').value.trim() || '';
+      if(!title){ alert('Please add title'); return; }
+      const item = { id:uid(), type:'found', title, category:cat, location:loc, desc, date:now(), secretQ:'What unique mark?', secretA:'demo-'+Math.random().toString(36).slice(2,6), postedBy:'student', claimed:false };
+      const items = getItems(); items.unshift(item); saveItems(items); render(); toggleForms(null);
+      alert('Found item recorded (demo). Confidential question created (for claim verification).');
+      document.getElementById('foundTitle').value='';document.getElementById('foundDescription').value='';document.getElementById('foundLocation').value='';
+    });
+
+    document.getElementById('submitLost').addEventListener('click', ()=>{
+      const title = document.getElementById('lostTitle').value.trim();
+      const cat = document.getElementById('lostCategory').value.trim() || 'other';
+      const loc = document.getElementById('lostLocation').value.trim() || 'unknown';
+      const desc = document.getElementById('lostDescription').value.trim() || '';
+      if(!title){ alert('Please add title'); return; }
+      const item = { id:uid(), type:'lost', title, category:cat, location:loc, desc, date:now(), secretQ:'What color is the item?', secretA:'demo-'+Math.random().toString(36).slice(2,6), postedBy:'student', claimed:false };
+      const items = getItems(); items.unshift(item); saveItems(items); render(); toggleForms(null);
+      alert('Lost item recorded (demo). Staff review recommended in production.');
+      document.getElementById('lostTitle').value='';document.getElementById('lostDescription').value='';document.getElementById('lostLocation').value='';
+    });
+
+    /* --- Claim flow (demo with cooldown) --- */
+    let currentClaimItem = null;
+    function startClaim(item){
+      currentClaimItem = item;
+      document.getElementById('claimPane').style.display = 'block';
+      document.getElementById('claimPrompt').textContent = `Secret question: ${item.secretQ}`;
+      document.getElementById('claimAnswer').value = '';
+      document.getElementById('claimStatus').textContent = '';
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+
+    document.getElementById('submitClaim').addEventListener('click', ()=>{
+      if(!currentClaimItem) return;
+      const ans = (document.getElementById('claimAnswer').value || '').trim().toLowerCase();
+      const items = getItems();
+      const target = items.find(i=>i.id===currentClaimItem.id);
+      if(!target){ alert('Item not found'); return; }
+      // simple cooldown stored per item in localStorage
+      const ckey = 'claim_attempts_' + target.id;
+      const attempts = JSON.parse(localStorage.getItem(ckey) || '[]');
+      const nowT = Date.now();
+      // allow max 3 attempts per 24 hours in demo
+      const lastDayAttempts = attempts.filter(t=> nowT - t < 24*3600*1000 );
+      if(lastDayAttempts.length >= 3){ document.getElementById('claimStatus').textContent = 'Too many attempts. Try again later or contact staff.'; return; }
+      // check answer
+      const ok = (ans === String((target.secretA||'')).toLowerCase());
+      attempts.push(nowT);
+      localStorage.setItem(ckey, JSON.stringify(attempts));
+      if(ok){
+        target.claimed = true;
+        saveItems(items);
+        render();
+        document.getElementById('claimStatus').textContent = 'Claim verified — record sent to staff (demo).';
+        // In production: trigger staff notification + email + require in-person verification
+      } else {
+        document.getElementById('claimStatus').textContent = 'Answer incorrect. Attempts left: ' + Math.max(0,3-lastDayAttempts.length-1);
+      }
+    });
+
+    /* --- Search & filters --- */
+    document.getElementById('searchBtn').addEventListener('click', render);
+    qEl.addEventListener('keyup', (e)=>{ if(e.key==='Enter') render(); });
+    filterCategory.addEventListener('change', render);
+    filterDate.addEventListener('change', render);
+
+    /* --- Admin toggle (demo) --- */
+    document.getElementById('adminToggle').addEventListener('click', ()=>{
+      const pwd = prompt('Enter admin pass (demo):');
+      if(pwd === 'admin123'){ alert('Admin panel (demo): listing all items:\n\n' + JSON.stringify(getItems(),null,2)); }
+      else alert('Wrong password (demo). In production use proper auth.');
+    });
+
+    /* --- Simple assistant (client-side simulated) --- */
+    const chatBubble = document.getElementById('chatBubble');
+    const chatWindow = document.getElementById('chatWindow');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+
+    function addChatMessage(text, who='ai'){
+      const d = document.createElement('div'); d.className = 'chat-msg '+(who==='user'?'user':'ai'); d.textContent = text;
+      chatMessages.appendChild(d); chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatBubble.addEventListener('click', ()=>{ chatWindow.style.display='flex'; chatBubble.style.display='none'; addChatMessage('Hello! I can help you search items, guide reporting, or explain the claim process. Try: "I lost a black bottle".'); });
+    document.getElementById('closeChat').addEventListener('click', ()=>{ chatWindow.style.display='none'; chatBubble.style.display='flex'; });
+    document.getElementById('minChat').addEventListener('click', ()=>{ chatWindow.style.display='none'; chatBubble.style.display='flex'; });
+
+    document.getElementById('sendChat').addEventListener('click', sendChat);
+    chatInput.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendChat(); });
+
+    function sendChat(){
+      const t = chatInput.value.trim(); if(!t) return;
+      addChatMessage(t,'user'); chatInput.value='';
+      // Simulated assistant behavior: basic NLU rules + guidance
+      setTimeout(()=>{
+        const lc = t.toLowerCase();
+        if(lc.includes('lost') || lc.includes('missing')) {
+          addChatMessage('I can help. Tell me what you lost (e.g. "black water bottle near library"). I will search recent items for matches.');
+        } else if(lc.includes('found') || lc.includes('i found')) {
+          addChatMessage('Great — please use the Report Found form. Click "Report Found" at the top and fill in unique marks so we can verify claims later.');
+        } else if(lc.includes('claim')) {
+          addChatMessage('To claim an item, answer the confidential question associated with that item. If unsure, contact staff at your campus desk.');
+        } else if(lc.includes('help') || lc.includes('how')) {
+          addChatMessage('This demo stores data locally. In production we use Firestore and the AI assistant securely via a server. For now, try searching with the search box.');
+        } else {
+          // try fuzzy search for an item in demo data
+          const items = getItems();
+          const found = items.find(i => (i.title + ' ' + i.desc + ' ' + i.location).toLowerCase().includes(lc));
+          if(found) addChatMessage(`I found an item that may match: "${found.title}" (${found.location}). Click View on the listing to see details and confidential question.`);
+          else addChatMessage("Sorry, I couldn't find an exact match. Try different keywords or report the item using the form.");
+        }
+      }, 700);
+    }
+
+    /* --- Quick helpers --- */
+    render();
+  </script>
 </body>
 </html>
