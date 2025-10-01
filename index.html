@@ -1,0 +1,111 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FindMyACLC — Lost & Found</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Firebase SDKs (modular) -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.24.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <h1>FindMyACLC</h1>
+      <p class="tag">Lost & Found — quick, secure, and staff-reviewed</p>
+    </div>
+    <div class="auth-actions">
+      <span id="userEmail" class="user-email"></span>
+      <button id="loginBtn" class="btn outline">Login</button>
+      <button id="registerBtn" class="btn outline">Register</button>
+      <button id="logoutBtn" class="btn hidden">Logout</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="search-section">
+      <input id="searchInput" placeholder="Search recent found items (e.g., phone, keys, water bottle)" />
+      <button id="searchBtn" class="btn">Search</button>
+      <button id="refreshBtn" class="btn ghost">Refresh</button>
+    </section>
+
+    <section class="controls">
+      <button id="reportFoundBtn" class="btn">Report Found Item</button>
+      <button id="myReportsBtn" class="btn ghost">My Reports</button>
+    </section>
+
+    <section id="itemsList" class="items-list">
+      <!-- JS fills with found item cards -->
+    </section>
+
+    <div class="pagination">
+      <button id="prevBtn" class="btn ghost" disabled>Previous</button>
+      <button id="nextBtn" class="btn ghost">Next</button>
+    </div>
+  </main>
+
+  <!-- Login Modal -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <button id="closeModal" class="modal-close">&times;</button>
+
+      <div id="authForms">
+        <h3 id="modalTitle">Login</h3>
+
+        <form id="loginForm" class="form">
+          <input id="loginEmail" type="email" placeholder="Email" required />
+          <input id="loginPassword" type="password" placeholder="Password" required />
+          <button type="submit" class="btn">Login</button>
+        </form>
+
+        <form id="registerForm" class="form hidden">
+          <input id="regEmail" type="email" placeholder="Email" required />
+          <input id="regPassword" type="password" placeholder="Password (min 6)" minlength="6" required />
+          <select id="regRole">
+            <option value="student">Student</option>
+            <option value="staff">Staff</option>
+          </select>
+          <button type="submit" class="btn">Register</button>
+        </form>
+      </div>
+
+      <!-- Report Found (in same modal, shown when reporting) -->
+      <div id="reportFormWrap" class="hidden">
+        <h3>Report Found Item</h3>
+        <form id="reportForm" class="form">
+          <input id="itemTitle" placeholder="Title (e.g., Black Water Bottle)" required />
+          <textarea id="itemDesc" placeholder="Short description" rows="3"></textarea>
+          <input id="itemLocation" placeholder="Location (e.g., Library, Cafeteria)" />
+          <input id="dateFound" type="date" />
+          <input id="itemImage" type="file" accept="image/*" />
+          <button type="submit" class="btn">Submit Report</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Bubble + Chat Window -->
+  <div id="chatBubble" class="chat-bubble" title="Ask the assistant">💬</div>
+  <div id="chatWindow" class="chat-window hidden">
+    <div class="chat-header">
+      <h3>FindMyACLC Assistant</h3>
+      <button id="minimizeChat" class="btn small">−</button>
+    </div>
+    <div id="chatMessages" class="chat-messages"></div>
+    <div class="chat-input">
+      <input id="chatInput" placeholder="Ask about lost & found (e.g., I lost a blue umbrella near the library)" />
+      <button id="sendChat" class="btn">Send</button>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <small>FindMyACLC — contact staff for urgent claims. This site stores minimal user data.</small>
+  </footer>
+
+  <script src="script.js" type="module"></script>
+</body>
+</html>
