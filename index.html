@@ -1,415 +1,1526 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FindMyACLC — Lost & Found (Demo)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindMyACLC - Lost & Found</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <!-- Styles adapted from your Profiletyles.css -->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-    *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-    body{background:#f6f7fb;padding:20px;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;}
-    .app{width:100%;max-width:1100px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(8,20,40,0.06);overflow:hidden;}
-    header{display:flex;align-items:center;gap:18px;padding:18px 22px;border-bottom:1px solid #f0f0f3}
-    .brand{display:flex;align-items:center;gap:14px}
-    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#6a00ff,#007bff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
-    h1{font-size:18px;color:#101010}
-    .top-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
-    .btn{background:#6a00ff;color:#fff;padding:8px 12px;border-radius:9px;text-decoration:none;font-weight:600;border:none;cursor:pointer}
-    .btn.ghost{background:transparent;color:#6a00ff;border:1px solid #e9e5ff}
-    .layout{display:grid;grid-template-columns:360px 1fr;border-top:1px solid #f0f0f3}
-    /* Sidebar */
-    .sidebar{padding:18px;min-height:560px;border-right:1px solid #f5f6fa;background:#fbfbff}
-    .search-box{display:flex;gap:8px;margin-bottom:14px}
-    .search-box input{flex:1;padding:10px;border-radius:9px;border:1px solid #e9e9f0}
-    .filters label{display:block;margin:10px 0 6px;color:#555;font-size:13px}
-    .filters select,input[type="date"]{width:100%;padding:8px;border-radius:8px;border:1px solid #eee}
-    .small-note{font-size:12px;color:#888;margin-top:10px}
-    /* Main */
-    .main{padding:18px}
-    .controls{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-    .card{background:#fff;border-radius:10px;padding:12px;border:1px solid #f1f1f6}
-    .card h3{font-size:15px;margin-bottom:6px}
-    .card p{font-size:13px;color:#555;margin-bottom:8px}
-    .meta{font-size:12px;color:#999}
-    .badge{display:inline-block;padding:6px 8px;border-radius:8px;font-weight:600}
-    .badge.found{background:#e6ffef;color:#0b6d3a}
-    .badge.lost{background:#fff3e6;color:#8a4a00}
-    /* Forms */
-    .form{display:grid;gap:8px;background:#fbfbff;padding:12px;border-radius:10px;border:1px dashed #eee;margin-bottom:12px}
-    .form input,.form textarea{padding:8px;border-radius:8px;border:1px solid #eee}
-    .form textarea{min-height:80px;resize:vertical}
-    /* Chat UI (floating) - based on your chat styles */
-    .chat-bubble{position:fixed;right:25px;bottom:25px;width:56px;height:56px;border-radius:50%;background:linear-gradient(180deg,#6a00ff,#007bff);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 24px rgba(106,0,255,0.18);z-index:999}
-    .chat-window{position:fixed;right:25px;bottom:96px;width:360px;height:520px;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(10,30,70,0.12);display:flex;flex-direction:column;overflow:hidden;z-index:999;transform:translateY(0);opacity:1}
-    .chat-header{background:linear-gradient(90deg,#6a00ff,#007bff);padding:12px;color:#fff;display:flex;align-items:center;justify-content:space-between}
-    .chat-messages{flex:1;padding:12px;overflow-y:auto;background:#fbfbff}
-    .chat-input{display:flex;padding:12px;border-top:1px solid #f1f1f5}
-    .chat-input input{flex:1;padding:10px;border-radius:10px;border:1px solid #eee}
-    .chat-msg{max-width:80%;padding:10px 12px;border-radius:12px;margin:8px 0;font-size:13px;line-height:1.3}
-    .chat-msg.user{background:linear-gradient(180deg,#6a00ff,#5a00e6);color:#fff;margin-left:auto}
-    .chat-msg.ai{background:#eef2ff;color:#101010;margin-right:auto}
-    .typing{display:flex;gap:6px;align-items:center}
-    .typing span{width:7px;height:7px;background:#6a00ff;border-radius:50%;animation:typing 1.2s infinite}
-    @keyframes typing{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
-    /* small helpers */
-    .muted{color:#777;font-size:13px}
-    footer{padding:10px 18px;border-top:1px solid #fafafa;font-size:13px;color:#666;background:#fff}
-    @media (max-width:900px){.layout{grid-template-columns:1fr;}.sidebar{order:2;border-right:none;border-top:1px solid #f5f6fa}}
-  </style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #3498db;
+            color: #3498db;
+        }
+
+        .btn-outline:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 2rem 0;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filters select, .filters input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* Items Grid */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .item-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 200px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+
+        .item-content {
+            padding: 1.5rem;
+        }
+
+        .item-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .item-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+
+        .item-description {
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        .claim-btn {
+            width: 100%;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        form input, form textarea, form select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        form textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .confidential-qa {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .confidential-qa h4 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        /* Chat Bot */
+        .chat-bubble {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            opacity: 1;
+            transform: scale(1);
+            font-size: 1.5rem;
+            z-index: 1001;
+        }
+
+        .chat-bubble.hidden {
+            opacity: 0;
+            transform: scale(0);
+            pointer-events: none;
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 90px;
+            right: 25px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            z-index: 1001;
+        }
+
+        .chat-window.open {
+            opacity: 1;
+            display: flex;
+            transform: translateY(0);
+        }
+
+        .chat-window.minimized {
+            height: 40px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .chat-header button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .chat-header button:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            transition: opacity 0.3s ease;
+        }
+
+        .chat-window.minimized .chat-messages {
+            opacity: 0;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 12px;
+            border-top: 1px solid #eee;
+            background: #fff;
+            transition: opacity 0.3s ease;
+        }
+
+        .chat-window.minimized .chat-input {
+            opacity: 0;
+        }
+
+        #chatInput {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+            font-size: 14px;
+        }
+
+        #chatInput:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        #sendChat {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        #sendChat:hover {
+            background: #2980b9;
+        }
+
+        .message {
+            padding: 12px 16px;
+            margin: 10px 0;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .message.user {
+            background: #3498db;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+            margin-right: 10px;
+            border: 2px solid #3498db;
+        }
+
+        .message.ai {
+            background: #e0e0e0;
+            color: #333;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+            margin-left: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .message.user::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid #3498db;
+        }
+
+        .message.ai::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 10px solid #e0e0e0;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .typing-indicator.visible {
+            opacity: 1;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #3498db;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        .chat-messages {
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-window {
+                width: 90%;
+                right: 5%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="FindMyACLC demo">
-    <header>
-      <div class="brand">
-        <div class="logo">ACLC</div>
-        <div>
-          <h1>FindMyACLC — Lost & Found</h1>
-          <div class="muted">Student-centered lost & found demo (client-side)</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">FindMyACLC</h1>
+            <nav class="nav">
+                <button id="loginBtn" class="btn btn-outline">Login</button>
+                <button id="registerBtn" class="btn btn-primary">Register</button>
+                <button id="dashboardBtn" class="btn btn-outline" style="display: none;">Dashboard</button>
+                <button id="logoutBtn" class="btn btn-outline" style="display: none;">Logout</button>
+            </nav>
         </div>
-      </div>
-      <div class="top-actions">
-        <button id="openReportFound" class="btn">Report Found</button>
-        <button id="openReportLost" class="btn ghost">Report Lost</button>
-        <button id="adminToggle" class="btn ghost">Admin</button>
-      </div>
     </header>
 
-    <div class="layout">
-      <!-- Sidebar -->
-      <aside class="sidebar" aria-label="Filters">
-        <div class="search-box">
-          <input id="q" placeholder="Search (e.g. black bottle, phone)" aria-label="search">
-          <button id="searchBtn" class="btn">Search</button>
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Hero Section -->
+            <section class="hero">
+                <h2>Find Your Lost Items</h2>
+                <p>Lost something on campus? Check our found items database or report a found item.</p>
+                <div class="hero-actions">
+                    <button id="browseItems" class="btn btn-primary">Browse Found Items</button>
+                    <button id="reportFound" class="btn btn-secondary">Report Found Item</button>
+                    <button id="reportLost" class="btn btn-outline" style="display: none;">Report Lost Item</button>
+                </div>
+            </section>
+
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search for items (e.g., 'black water bottle', 'phone')">
+                    <button id="searchBtn" class="btn btn-primary">Search</button>
+                </div>
+                <div class="filters">
+                    <select id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="books">Books</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="date" id="dateFilter">
+                    <input type="text" id="locationFilter" placeholder="Location">
+                </div>
+            </section>
+
+            <!-- Items Grid -->
+            <section class="items-section">
+                <h3>Recently Found Items</h3>
+                <div id="itemsGrid" class="items-grid">
+                    <!-- Items will be loaded here -->
+                </div>
+                <div class="pagination">
+                    <button id="prevPage" class="btn btn-outline">Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button id="nextPage" class="btn btn-outline">Next</button>
+                </div>
+            </section>
         </div>
+    </main>
 
-        <div class="filters">
-          <label>Category</label>
-          <select id="filterCategory">
-            <option value="">Any</option>
-            <option value="electronics">Electronics</option>
-            <option value="accessories">Accessories</option>
-            <option value="clothing">Clothing</option>
-            <option value="other">Other</option>
-          </select>
-
-          <label>Date</label>
-          <input id="filterDate" type="date">
-
-          <div class="small-note">This is a demo: items are stored in your browser only (localStorage).</div>
+    <!-- Dashboard (Hidden by default) -->
+    <section class="dashboard container" id="dashboardSection">
+        <div class="dashboard-header">
+            <h2>Dashboard</h2>
+            <button id="backToMain" class="btn btn-outline">Back to Main</button>
         </div>
-
-        <hr style="margin:12px 0;border:none;border-top:1px dashed #eee">
-
-        <div>
-          <h4 style="font-size:14px;margin-bottom:8px">My Reports</h4>
-          <div id="myReports" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="dashboard-actions">
+            <button id="myItemsBtn" class="btn btn-primary">My Items</button>
+            <button id="myClaimsBtn" class="btn btn-primary">My Claims</button>
+            <button id="adminPanelBtn" class="btn btn-secondary" style="display: none;">Admin Panel</button>
         </div>
-      </aside>
-
-      <!-- Main -->
-      <main class="main" role="main">
-        <div class="controls">
-          <div class="muted">Showing <strong id="count">0</strong> items</div>
-          <div style="margin-left:auto" class="muted">Tip: Click an item to start claim verification</div>
+        <div id="dashboardContent">
+            <!-- Dashboard content will be loaded here -->
         </div>
+    </section>
 
-        <section>
-          <div id="cards" class="cards" aria-live="polite"></div>
-        </section>
-
-        <section style="margin-top:12px">
-          <div class="form" id="reportFoundForm" style="display:none">
-            <h4>Report Found Item</h4>
-            <input id="foundTitle" placeholder="Title (e.g. Black water bottle)">
-            <input id="foundCategory" placeholder="Category">
-            <input id="foundLocation" placeholder="Location found (e.g. Library)">
-            <textarea id="foundDescription" placeholder="Describe the item (include unique marks)"></textarea>
-            <button id="submitFound" class="btn">Submit Found (demo)</button>
-          </div>
-
-          <div class="form" id="reportLostForm" style="display:none">
-            <h4>Report Lost Item (staff only in production)</h4>
-            <input id="lostTitle" placeholder="Title (e.g. Samsung A10)">
-            <input id="lostCategory" placeholder="Category">
-            <input id="lostLocation" placeholder="Last seen (e.g. Cafeteria)">
-            <textarea id="lostDescription" placeholder="Describe the item (unique details)"></textarea>
-            <button id="submitLost" class="btn">Submit Lost (demo)</button>
-          </div>
-        </section>
-
-        <section style="margin-top:14px">
-          <div class="form" id="claimPane" style="display:none">
-            <h4>Attempt Claim</h4>
-            <div id="claimPrompt" class="muted">Answer the confidential question to claim this item.</div>
-            <input id="claimAnswer" placeholder="Your answer">
-            <button id="submitClaim" class="btn">Submit Claim</button>
-            <div id="claimStatus" style="margin-top:8px;font-size:13px"></div>
-          </div>
-        </section>
-      </main>
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle">Login</h3>
+            <form id="authForm">
+                <input type="email" id="authEmail" placeholder="Email" required>
+                <input type="password" id="authPassword" placeholder="Password" required>
+                <input type="text" id="authId" placeholder="Student/Staff ID" style="display: none;">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+            <p id="authSwitch">Don't have an account? <a href="#" id="switchToRegister">Register</a></p>
+        </div>
     </div>
 
-    <footer>Built from your UI reference & planning doc. This demo stores data locally only. Replace client-demo parts with Firestore + backend for production.</footer>
-  </div>
-
-  <!-- Floating Chat UI (client-side assistant) -->
-  <div class="chat-bubble" id="chatBubble" role="button" aria-label="Open assistant">💬</div>
-
-  <div class="chat-window" id="chatWindow" style="display:none" role="dialog" aria-label="Assistant">
-    <div class="chat-header">
-      <div>FindMyACLC Assistant</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="minChat" class="btn ghost" title="Minimize" style="padding:6px 8px">−</button>
-        <button id="closeChat" class="btn ghost" title="Close" style="padding:6px 8px">×</button>
-      </div>
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Report Found Item</h3>
+            <form id="reportForm">
+                <input type="text" id="itemTitle" placeholder="Item Title" required>
+                <textarea id="itemDescription" placeholder="Description" required></textarea>
+                <input type="text" id="itemLocation" placeholder="Location Found" required>
+                <select id="itemCategory" required>
+                    <option value="">Select Category</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="books">Books</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="other">Other</option>
+                </select>
+                <input type="file" id="itemImage" accept="image/*">
+                <div class="confidential-qa">
+                    <h4>Security Questions (for verification)</h4>
+                    <input type="text" id="question1" placeholder="Question 1" required>
+                    <input type="text" id="answer1" placeholder="Answer 1" required>
+                    <input type="text" id="question2" placeholder="Question 2" required>
+                    <input type="text" id="answer2" placeholder="Answer 2" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Report</button>
+            </form>
+        </div>
     </div>
 
-    <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
-
-    <div class="chat-input">
-      <input id="chatInput" placeholder="Ask about reporting, items, or claiming..." aria-label="Chat input">
-      <button id="sendChat" class="btn">➤</button>
+    <!-- Claim Modal -->
+    <div id="claimModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Claim Item</h3>
+            <div id="claimQuestions">
+                <!-- Questions will be loaded here -->
+            </div>
+            <button id="submitClaim" class="btn btn-primary" style="display: none;">Submit Answers</button>
+        </div>
     </div>
-  </div>
 
-  <!-- App logic (all client-side demo) -->
-  <script>
-    /*****************************************************************
-     * Demo single-file FindMyACLC
-     * - Uses localStorage to persist demo items
-     * - Chat assistant is simulated (will point to staff/contact)
-     * - Claim verification is mocked with a stored 'secret answer'
-     *
-     * NOTE: For production use Firestore + server verification + real AI via a secure server/worker
-     *****************************************************************/
+    <!-- Chat Bot -->
+    <div class="chat-bubble" id="chatBubble">💬</div>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <h3>FindMyACLC Assistant</h3>
+            <button id="minimizeChat">−</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai">
+                Hello! I'm your FindMyACLC assistant. I can help you search for lost items, answer questions about our service, and guide you through the claiming process. How can I help you today?
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Ask about lost items...">
+            <button id="sendChat">➤</button>
+        </div>
+    </div>
 
-    /* --- Utilities & initial demo data --- */
-    const STORAGE_KEY = 'findmyaclc_demo_items_v1';
-
-    function uid(){ return 'id_' + Math.random().toString(36).slice(2,9); }
-    function now(){ return new Date().toISOString(); }
-
-    // Seed demo items if none
-    function seedDemo(){
-      if(!localStorage.getItem(STORAGE_KEY)){
-        const demo = [
-          { id:uid(), type:'found', title:'Black water bottle', category:'accessories', location:'Library table 3', desc:'Matte black bottle with sticker "SKY"', date:now(), secretQ:'What is the sticker text?', secretA:'SKY', postedBy:'student', claimed:false },
-          { id:uid(), type:'found', title:'White earphones', category:'electronics', location:'Cafeteria', desc:'Left earbud has blue tape', date:now(), secretQ:'Which earbud has tape?', secretA:'left', postedBy:'staff', claimed:false },
-          { id:uid(), type:'lost', title:'Samsung A10', category:'electronics', location:'Last seen cafeteria', desc:'Blue case, screen protector cracked', date:now(), secretQ:'What color is the case?', secretA:'blue', postedBy:'student', claimed:false }
-        ];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(demo));
-      }
-    }
-
-    seedDemo();
-
-    function getItems(){
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    }
-    function saveItems(items){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    }
-
-    /* --- Rendering --- */
-    const cardsEl = document.getElementById('cards');
-    const countEl = document.getElementById('count');
-    const qEl = document.getElementById('q');
-    const filterCategory = document.getElementById('filterCategory');
-    const filterDate = document.getElementById('filterDate');
-
-    function render(){
-      const items = getItems();
-      const q = (qEl.value || '').toLowerCase().trim();
-      const category = filterCategory.value;
-      const fdate = filterDate.value;
-      let shown = items.filter(i=>{
-        if(category && i.category.toLowerCase() !== category.toLowerCase()) return false;
-        if(fdate && i.date.slice(0,10) !== fdate) return false;
-        if(q){
-          const hay = (i.title+' '+i.desc+' '+i.location).toLowerCase();
-          return hay.includes(q);
-        }
-        return true;
-      });
-      countEl.textContent = shown.length;
-      cardsEl.innerHTML = '';
-      shown.forEach(item=>{
-        const card = document.createElement('article');
-        card.className = 'card';
-        card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <h3>${escapeHtml(item.title)}</h3>
-            <div class="meta">${new Date(item.date).toLocaleString()}</div>
-          </div>
-          <div style="margin:8px 0">
-            <span class="badge ${item.type==='found'?'found':'lost'}">${item.type.toUpperCase()}</span>
-            <span style="margin-left:8px" class="muted">${escapeHtml(item.category)} • ${escapeHtml(item.location)}</span>
-          </div>
-          <p>${escapeHtml(item.desc)}</p>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn" data-id="${item.id}" data-action="view">View</button>
-            <button class="btn ghost" data-id="${item.id}" data-action="claim">Attempt Claim</button>
-          </div>
-        `;
-        cardsEl.appendChild(card);
-      });
-      renderMyReports();
-      attachCardHandlers();
-    }
-
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-
-    function attachCardHandlers(){
-      cardsEl.querySelectorAll('button').forEach(btn=>{
-        btn.onclick = (e)=>{
-          const id = btn.getAttribute('data-id');
-          const action = btn.getAttribute('data-action');
-          const item = getItems().find(x=>x.id===id);
-          if(action==='view') return alert(`Item: ${item.title}\n\nLocation: ${item.location}\n\nDesc: ${item.desc}\n\nConfidential Q: ${item.secretQ}`);
-          if(action==='claim') return startClaim(item);
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBASqZ7VDxU_j6VEDN9pmhIDuDM1SU9qoI",
+            authDomain: "findmyaclc.firebaseapp.com",
+            projectId: "findmyaclc",
+            storageBucket: "findmyaclc.firebasestorage.app",
+            messagingSenderId: "351280538849",
+            appId: "1:351280538849:web:7b930e2e2885b40f4083a0",
+            measurementId: "G-ZH9V9KH3H2"
         };
-      });
-    }
 
-    function renderMyReports(){
-      const myReports = document.getElementById('myReports');
-      const mine = getItems().filter(i=>i.postedBy==='student');
-      myReports.innerHTML = mine.length ? mine.map(i=>`<div style="padding:8px;border-radius:8px;background:#fff;border:1px solid #f3f3f8"><strong>${escapeHtml(i.title)}</strong><div class="muted" style="font-size:12px">${escapeHtml(i.type)} • ${new Date(i.date).toLocaleDateString()}</div></div>`).join('') : '<div class="muted">No reports yet</div>';
-    }
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
 
-    /* --- Reports (demo) --- */
-    document.getElementById('openReportFound').addEventListener('click', ()=>{ toggleForms('found'); });
-    document.getElementById('openReportLost').addEventListener('click', ()=>{ toggleForms('lost'); });
+        // Global variables
+        let currentUser = null;
+        let currentItems = [];
+        let currentPage = 1;
+        const itemsPerPage = 6;
+        let selectedItemForClaim = null;
 
-    function toggleForms(which){
-      document.getElementById('reportFoundForm').style.display = (which==='found')?'block':'none';
-      document.getElementById('reportLostForm').style.display = (which==='lost')?'block':'none';
-      window.scrollTo({top:0,behavior:'smooth'});
-    }
+        // DOM Elements
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const authModal = document.getElementById('authModal');
+        const reportModal = document.getElementById('reportModal');
+        const claimModal = document.getElementById('claimModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const authForm = document.getElementById('authForm');
+        const authSwitch = document.getElementById('authSwitch');
+        const switchToRegister = document.getElementById('switchToRegister');
+        const authId = document.getElementById('authId');
+        const browseItemsBtn = document.getElementById('browseItems');
+        const reportFoundBtn = document.getElementById('reportFound');
+        const reportLostBtn = document.getElementById('reportLost');
+        const searchBtn = document.getElementById('searchBtn');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const dateFilter = document.getElementById('dateFilter');
+        const locationFilter = document.getElementById('locationFilter');
+        const itemsGrid = document.getElementById('itemsGrid');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageInfo = document.getElementById('pageInfo');
+        const reportForm = document.getElementById('reportForm');
+        const dashboardSection = document.getElementById('dashboardSection');
+        const backToMainBtn = document.getElementById('backToMain');
+        const myItemsBtn = document.getElementById('myItemsBtn');
+        const myClaimsBtn = document.getElementById('myClaimsBtn');
+        const adminPanelBtn = document.getElementById('adminPanelBtn');
+        const dashboardContent = document.getElementById('dashboardContent');
 
-    document.getElementById('submitFound').addEventListener('click', ()=>{
-      const title = document.getElementById('foundTitle').value.trim();
-      const cat = document.getElementById('foundCategory').value.trim() || 'other';
-      const loc = document.getElementById('foundLocation').value.trim() || 'unknown';
-      const desc = document.getElementById('foundDescription').value.trim() || '';
-      if(!title){ alert('Please add title'); return; }
-      const item = { id:uid(), type:'found', title, category:cat, location:loc, desc, date:now(), secretQ:'What unique mark?', secretA:'demo-'+Math.random().toString(36).slice(2,6), postedBy:'student', claimed:false };
-      const items = getItems(); items.unshift(item); saveItems(items); render(); toggleForms(null);
-      alert('Found item recorded (demo). Confidential question created (for claim verification).');
-      document.getElementById('foundTitle').value='';document.getElementById('foundDescription').value='';document.getElementById('foundLocation').value='';
-    });
+        // Chat elements
+        const chatBubble = document.getElementById('chatBubble');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatInput = document.getElementById('chatInput');
+        const sendChat = document.getElementById('sendChat');
+        const minimizeChat = document.getElementById('minimizeChat');
+        const chatMessages = document.getElementById('chatMessages');
 
-    document.getElementById('submitLost').addEventListener('click', ()=>{
-      const title = document.getElementById('lostTitle').value.trim();
-      const cat = document.getElementById('lostCategory').value.trim() || 'other';
-      const loc = document.getElementById('lostLocation').value.trim() || 'unknown';
-      const desc = document.getElementById('lostDescription').value.trim() || '';
-      if(!title){ alert('Please add title'); return; }
-      const item = { id:uid(), type:'lost', title, category:cat, location:loc, desc, date:now(), secretQ:'What color is the item?', secretA:'demo-'+Math.random().toString(36).slice(2,6), postedBy:'student', claimed:false };
-      const items = getItems(); items.unshift(item); saveItems(items); render(); toggleForms(null);
-      alert('Lost item recorded (demo). Staff review recommended in production.');
-      document.getElementById('lostTitle').value='';document.getElementById('lostDescription').value='';document.getElementById('lostLocation').value='';
-    });
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', initApp);
+        loginBtn.addEventListener('click', () => openAuthModal('login'));
+        registerBtn.addEventListener('click', () => openAuthModal('register'));
+        logoutBtn.addEventListener('click', handleLogout);
+        dashboardBtn.addEventListener('click', showDashboard);
+        backToMainBtn.addEventListener('click', showMain);
+        browseItemsBtn.addEventListener('click', loadItems);
+        reportFoundBtn.addEventListener('click', openReportModal);
+        reportLostBtn.addEventListener('click', openReportModal);
+        searchBtn.addEventListener('click', handleSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+        prevPageBtn.addEventListener('click', () => changePage(-1));
+        nextPageBtn.addEventListener('click', () => changePage(1));
+        reportForm.addEventListener('submit', handleReportSubmit);
+        myItemsBtn.addEventListener('click', () => loadMyItems());
+        myClaimsBtn.addEventListener('click', () => loadMyClaims());
+        adminPanelBtn.addEventListener('click', () => loadAdminPanel());
 
-    /* --- Claim flow (demo with cooldown) --- */
-    let currentClaimItem = null;
-    function startClaim(item){
-      currentClaimItem = item;
-      document.getElementById('claimPane').style.display = 'block';
-      document.getElementById('claimPrompt').textContent = `Secret question: ${item.secretQ}`;
-      document.getElementById('claimAnswer').value = '';
-      document.getElementById('claimStatus').textContent = '';
-      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
-    }
+        // Chat event listeners
+        chatBubble.addEventListener('click', toggleChat);
+        minimizeChat.addEventListener('click', toggleMinimize);
+        sendChat.addEventListener('click', handleSendChat);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSendChat();
+        });
 
-    document.getElementById('submitClaim').addEventListener('click', ()=>{
-      if(!currentClaimItem) return;
-      const ans = (document.getElementById('claimAnswer').value || '').trim().toLowerCase();
-      const items = getItems();
-      const target = items.find(i=>i.id===currentClaimItem.id);
-      if(!target){ alert('Item not found'); return; }
-      // simple cooldown stored per item in localStorage
-      const ckey = 'claim_attempts_' + target.id;
-      const attempts = JSON.parse(localStorage.getItem(ckey) || '[]');
-      const nowT = Date.now();
-      // allow max 3 attempts per 24 hours in demo
-      const lastDayAttempts = attempts.filter(t=> nowT - t < 24*3600*1000 );
-      if(lastDayAttempts.length >= 3){ document.getElementById('claimStatus').textContent = 'Too many attempts. Try again later or contact staff.'; return; }
-      // check answer
-      const ok = (ans === String((target.secretA||'')).toLowerCase());
-      attempts.push(nowT);
-      localStorage.setItem(ckey, JSON.stringify(attempts));
-      if(ok){
-        target.claimed = true;
-        saveItems(items);
-        render();
-        document.getElementById('claimStatus').textContent = 'Claim verified — record sent to staff (demo).';
-        // In production: trigger staff notification + email + require in-person verification
-      } else {
-        document.getElementById('claimStatus').textContent = 'Answer incorrect. Attempts left: ' + Math.max(0,3-lastDayAttempts.length-1);
-      }
-    });
+        // Modal close buttons
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', () => {
+                authModal.style.display = 'none';
+                reportModal.style.display = 'none';
+                claimModal.style.display = 'none';
+            });
+        });
 
-    /* --- Search & filters --- */
-    document.getElementById('searchBtn').addEventListener('click', render);
-    qEl.addEventListener('keyup', (e)=>{ if(e.key==='Enter') render(); });
-    filterCategory.addEventListener('change', render);
-    filterDate.addEventListener('change', render);
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === authModal) authModal.style.display = 'none';
+            if (e.target === reportModal) reportModal.style.display = 'none';
+            if (e.target === claimModal) claimModal.style.display = 'none';
+        });
 
-    /* --- Admin toggle (demo) --- */
-    document.getElementById('adminToggle').addEventListener('click', ()=>{
-      const pwd = prompt('Enter admin pass (demo):');
-      if(pwd === 'admin123'){ alert('Admin panel (demo): listing all items:\n\n' + JSON.stringify(getItems(),null,2)); }
-      else alert('Wrong password (demo). In production use proper auth.');
-    });
+        // Initialize the application
+        function initApp() {
+            // Check auth state
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    updateUIForUser(user);
+                    loadItems();
+                } else {
+                    currentUser = null;
+                    updateUIForGuest();
+                    loadItems();
+                }
+            });
 
-    /* --- Simple assistant (client-side simulated) --- */
-    const chatBubble = document.getElementById('chatBubble');
-    const chatWindow = document.getElementById('chatWindow');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-
-    function addChatMessage(text, who='ai'){
-      const d = document.createElement('div'); d.className = 'chat-msg '+(who==='user'?'user':'ai'); d.textContent = text;
-      chatMessages.appendChild(d); chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    chatBubble.addEventListener('click', ()=>{ chatWindow.style.display='flex'; chatBubble.style.display='none'; addChatMessage('Hello! I can help you search items, guide reporting, or explain the claim process. Try: "I lost a black bottle".'); });
-    document.getElementById('closeChat').addEventListener('click', ()=>{ chatWindow.style.display='none'; chatBubble.style.display='flex'; });
-    document.getElementById('minChat').addEventListener('click', ()=>{ chatWindow.style.display='none'; chatBubble.style.display='flex'; });
-
-    document.getElementById('sendChat').addEventListener('click', sendChat);
-    chatInput.addEventListener('keypress', (e)=>{ if(e.key==='Enter') sendChat(); });
-
-    function sendChat(){
-      const t = chatInput.value.trim(); if(!t) return;
-      addChatMessage(t,'user'); chatInput.value='';
-      // Simulated assistant behavior: basic NLU rules + guidance
-      setTimeout(()=>{
-        const lc = t.toLowerCase();
-        if(lc.includes('lost') || lc.includes('missing')) {
-          addChatMessage('I can help. Tell me what you lost (e.g. "black water bottle near library"). I will search recent items for matches.');
-        } else if(lc.includes('found') || lc.includes('i found')) {
-          addChatMessage('Great — please use the Report Found form. Click "Report Found" at the top and fill in unique marks so we can verify claims later.');
-        } else if(lc.includes('claim')) {
-          addChatMessage('To claim an item, answer the confidential question associated with that item. If unsure, contact staff at your campus desk.');
-        } else if(lc.includes('help') || lc.includes('how')) {
-          addChatMessage('This demo stores data locally. In production we use Firestore and the AI assistant securely via a server. For now, try searching with the search box.');
-        } else {
-          // try fuzzy search for an item in demo data
-          const items = getItems();
-          const found = items.find(i => (i.title + ' ' + i.desc + ' ' + i.location).toLowerCase().includes(lc));
-          if(found) addChatMessage(`I found an item that may match: "${found.title}" (${found.location}). Click View on the listing to see details and confidential question.`);
-          else addChatMessage("Sorry, I couldn't find an exact match. Try different keywords or report the item using the form.");
+            // Load initial items
+            loadItems();
         }
-      }, 700);
-    }
 
-    /* --- Quick helpers --- */
-    render();
-  </script>
+        // Update UI for logged in user
+        function updateUIForUser(user) {
+            loginBtn.style.display = 'none';
+            registerBtn.style.display = 'none';
+            dashboardBtn.style.display = 'block';
+            logoutBtn.style.display = 'block';
+            reportFoundBtn.style.display = 'block';
+            
+            // Check if user is staff/admin (simplified logic)
+            db.collection('users').doc(user.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        if (userData.role === 'staff' || userData.role === 'admin') {
+                            reportLostBtn.style.display = 'block';
+                            adminPanelBtn.style.display = 'block';
+                        }
+                    }
+                });
+        }
+
+        // Update UI for guest
+        function updateUIForGuest() {
+            loginBtn.style.display = 'block';
+            registerBtn.style.display = 'block';
+            dashboardBtn.style.display = 'none';
+            logoutBtn.style.display = 'none';
+            reportFoundBtn.style.display = 'none';
+            reportLostBtn.style.display = 'none';
+            adminPanelBtn.style.display = 'none';
+        }
+
+        // Open auth modal
+        function openAuthModal(type) {
+            authModal.style.display = 'block';
+            if (type === 'login') {
+                modalTitle.textContent = 'Login';
+                authId.style.display = 'none';
+                authSwitch.innerHTML = 'Don\'t have an account? <a href="#" id="switchToRegister">Register</a>';
+                document.getElementById('switchToRegister').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openAuthModal('register');
+                });
+            } else {
+                modalTitle.textContent = 'Register';
+                authId.style.display = 'block';
+                authSwitch.innerHTML = 'Already have an account? <a href="#" id="switchToLogin">Login</a>';
+                document.getElementById('switchToLogin').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    openAuthModal('login');
+                });
+            }
+        }
+
+        // Handle auth form submission
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const id = document.getElementById('authId').value;
+
+            if (modalTitle.textContent === 'Login') {
+                // Login
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        authModal.style.display = 'none';
+                        showToast('Login successful!');
+                    })
+                    .catch((error) => {
+                        showToast('Login failed: ' + error.message);
+                    });
+            } else {
+                // Register
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        // Save user data to Firestore
+                        return db.collection('users').doc(user.uid).set({
+                            email: email,
+                            id: id,
+                            role: 'student', // Default role
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        authModal.style.display = 'none';
+                        showToast('Registration successful!');
+                    })
+                    .catch((error) => {
+                        showToast('Registration failed: ' + error.message);
+                    });
+            }
+        });
+
+        // Handle logout
+        function handleLogout() {
+            auth.signOut()
+                .then(() => {
+                    showToast('Logged out successfully');
+                    showMain();
+                })
+                .catch((error) => {
+                    showToast('Logout failed: ' + error.message);
+                });
+        }
+
+        // Show main page
+        function showMain() {
+            document.querySelector('.main').style.display = 'block';
+            dashboardSection.style.display = 'none';
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.querySelector('.main').style.display = 'none';
+            dashboardSection.style.display = 'block';
+            loadMyItems(); // Default dashboard view
+        }
+
+        // Load items from Firestore
+        function loadItems() {
+            let query = db.collection('foundItems')
+                .where('isClaimed', '==', false)
+                .orderBy('dateFound', 'desc')
+                .limit(itemsPerPage);
+
+            // Apply filters if provided
+            const category = categoryFilter.value;
+            const date = dateFilter.value;
+            const location = locationFilter.value.toLowerCase();
+
+            if (category) {
+                query = query.where('category', '==', category);
+            }
+
+            if (date) {
+                query = query.where('dateFound', '==', date);
+            }
+
+            query.get()
+                .then((querySnapshot) => {
+                    currentItems = [];
+                    itemsGrid.innerHTML = '';
+
+                    if (querySnapshot.empty) {
+                        itemsGrid.innerHTML = '<p>No items found.</p>';
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        const item = { id: doc.id, ...doc.data() };
+                        currentItems.push(item);
+                        
+                        // Apply location filter client-side if needed
+                        if (location && !item.location.toLowerCase().includes(location)) {
+                            return;
+                        }
+
+                        displayItem(item);
+                    });
+
+                    updatePagination();
+                })
+                .catch((error) => {
+                    console.error('Error loading items:', error);
+                    itemsGrid.innerHTML = '<p>Error loading items. Please try again.</p>';
+                });
+        }
+
+        // Display an item in the grid
+        function displayItem(item) {
+            const itemCard = document.createElement('div');
+            itemCard.className = 'item-card';
+            
+            const date = item.dateFound ? new Date(item.dateFound.seconds * 1000).toLocaleDateString() : 'Unknown date';
+            
+            itemCard.innerHTML = `
+                <div class="item-image">
+                    ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;">` : 'No Image'}
+                </div>
+                <div class="item-content">
+                    <h3 class="item-title">${item.title}</h3>
+                    <div class="item-meta">
+                        <span>${item.category}</span>
+                        <span>${date}</span>
+                    </div>
+                    <p class="item-description">${item.description}</p>
+                    <p><strong>Location:</strong> ${item.location}</p>
+                    <button class="btn btn-primary claim-btn" data-id="${item.id}">Claim This Item</button>
+                </div>
+            `;
+            
+            itemsGrid.appendChild(itemCard);
+            
+            // Add event listener to claim button
+            itemCard.querySelector('.claim-btn').addEventListener('click', () => {
+                if (!currentUser) {
+                    showToast('Please login to claim items');
+                    openAuthModal('login');
+                    return;
+                }
+                openClaimModal(item);
+            });
+        }
+
+        // Handle search
+        function handleSearch() {
+            currentPage = 1;
+            loadItems();
+        }
+
+        // Change page
+        function changePage(direction) {
+            currentPage += direction;
+            if (currentPage < 1) currentPage = 1;
+            loadItems();
+        }
+
+        // Update pagination info
+        function updatePagination() {
+            pageInfo.textContent = `Page ${currentPage}`;
+            prevPageBtn.disabled = currentPage === 1;
+            // Note: In a real app, you'd check if there are more items
+        }
+
+        // Open report modal
+        function openReportModal() {
+            if (!currentUser) {
+                showToast('Please login to report items');
+                openAuthModal('login');
+                return;
+            }
+            reportModal.style.display = 'block';
+        }
+
+        // Handle report submission
+        function handleReportSubmit(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                showToast('Please login to report items');
+                return;
+            }
+            
+            const title = document.getElementById('itemTitle').value;
+            const description = document.getElementById('itemDescription').value;
+            const location = document.getElementById('itemLocation').value;
+            const category = document.getElementById('itemCategory').value;
+            const question1 = document.getElementById('question1').value;
+            const answer1 = document.getElementById('answer1').value;
+            const question2 = document.getElementById('question2').value;
+            const answer2 = document.getElementById('answer2').value;
+            const imageFile = document.getElementById('itemImage').files[0];
+            
+            // Prepare item data
+            const itemData = {
+                title,
+                description,
+                location,
+                category,
+                confidentialQuestions: [
+                    { question: question1, answer: answer1 },
+                    { question: question2, answer: answer2 }
+                ],
+                postedBy: currentUser.uid,
+                dateFound: new Date().toISOString().split('T')[0],
+                isClaimed: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Upload image if provided
+            if (imageFile) {
+                const storageRef = storage.ref();
+                const imageRef = storageRef.child(`items/${Date.now()}_${imageFile.name}`);
+                
+                imageRef.put(imageFile)
+                    .then(snapshot => snapshot.ref.getDownloadURL())
+                    .then(url => {
+                        itemData.imageUrl = url;
+                        saveItemToFirestore(itemData);
+                    })
+                    .catch(error => {
+                        console.error('Error uploading image:', error);
+                        saveItemToFirestore(itemData);
+                    });
+            } else {
+                saveItemToFirestore(itemData);
+            }
+        }
+
+        // Save item to Firestore
+        function saveItemToFirestore(itemData) {
+            db.collection('foundItems').add(itemData)
+                .then(() => {
+                    reportModal.style.display = 'none';
+                    reportForm.reset();
+                    showToast('Item reported successfully!');
+                    loadItems();
+                })
+                .catch(error => {
+                    console.error('Error saving item:', error);
+                    showToast('Error reporting item: ' + error.message);
+                });
+        }
+
+        // Open claim modal
+        function openClaimModal(item) {
+            selectedItemForClaim = item;
+            claimModal.style.display = 'block';
+            
+            const claimQuestions = document.getElementById('claimQuestions');
+            claimQuestions.innerHTML = '';
+            
+            // Display questions for the user to answer
+            item.confidentialQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.innerHTML = `
+                    <p><strong>Question ${index + 1}:</strong> ${q.question}</p>
+                    <input type="text" id="answer${index}" placeholder="Your answer" class="claim-answer">
+                `;
+                claimQuestions.appendChild(questionDiv);
+            });
+            
+            document.getElementById('submitClaim').style.display = 'block';
+            document.getElementById('submitClaim').onclick = handleClaimSubmit;
+        }
+
+        // Handle claim submission
+        function handleClaimSubmit() {
+            if (!selectedItemForClaim || !currentUser) return;
+            
+            const answers = [];
+            let allAnswered = true;
+            
+            selectedItemForClaim.confidentialQuestions.forEach((_, index) => {
+                const answer = document.getElementById(`answer${index}`).value.trim();
+                if (answer) {
+                    answers.push(answer);
+                } else {
+                    allAnswered = false;
+                }
+            });
+            
+            if (!allAnswered) {
+                showToast('Please answer all questions');
+                return;
+            }
+            
+            // In a real implementation, you would verify answers here
+            // For this demo, we'll just record the attempt
+            
+            // Record claim attempt
+            const claimData = {
+                userId: currentUser.uid,
+                itemId: selectedItemForClaim.id,
+                answers: answers,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            db.collection('claimAttempts').add(claimData)
+                .then(() => {
+                    claimModal.style.display = 'none';
+                    showToast('Claim submitted. You will be contacted if your claim is verified.');
+                    
+                    // In a real app, you would check answers and update item status
+                    // For demo purposes, we'll just close the modal
+                })
+                .catch(error => {
+                    console.error('Error submitting claim:', error);
+                    showToast('Error submitting claim: ' + error.message);
+                });
+        }
+
+        // Load user's items
+        function loadMyItems() {
+            if (!currentUser) return;
+            
+            dashboardContent.innerHTML = '<h3>My Reported Items</h3>';
+            
+            db.collection('foundItems')
+                .where('postedBy', '==', currentUser.uid)
+                .orderBy('createdAt', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    if (querySnapshot.empty) {
+                        dashboardContent.innerHTML += '<p>You haven\'t reported any items yet.</p>';
+                        return;
+                    }
+                    
+                    const itemsList = document.createElement('div');
+                    itemsList.className = 'items-grid';
+                    
+                    querySnapshot.forEach(doc => {
+                        const item = { id: doc.id, ...doc.data() };
+                        const itemCard = document.createElement('div');
+                        itemCard.className = 'item-card';
+                        
+                        const date = item.dateFound ? new Date(item.dateFound.seconds * 1000).toLocaleDateString() : 'Unknown date';
+                        const status = item.isClaimed ? 'Claimed' : 'Not Claimed';
+                        
+                        itemCard.innerHTML = `
+                            <div class="item-image">
+                                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;">` : 'No Image'}
+                            </div>
+                            <div class="item-content">
+                                <h3 class="item-title">${item.title}</h3>
+                                <div class="item-meta">
+                                    <span>${item.category}</span>
+                                    <span>${date}</span>
+                                </div>
+                                <p class="item-description">${item.description}</p>
+                                <p><strong>Location:</strong> ${item.location}</p>
+                                <p><strong>Status:</strong> ${status}</p>
+                            </div>
+                        `;
+                        
+                        itemsList.appendChild(itemCard);
+                    });
+                    
+                    dashboardContent.appendChild(itemsList);
+                })
+                .catch(error => {
+                    console.error('Error loading user items:', error);
+                    dashboardContent.innerHTML += '<p>Error loading your items.</p>';
+                });
+        }
+
+        // Load user's claims
+        function loadMyClaims() {
+            if (!currentUser) return;
+            
+            dashboardContent.innerHTML = '<h3>My Claim Attempts</h3>';
+            
+            db.collection('claimAttempts')
+                .where('userId', '==', currentUser.uid)
+                .orderBy('timestamp', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    if (querySnapshot.empty) {
+                        dashboardContent.innerHTML += '<p>You haven\'t made any claims yet.</p>';
+                        return;
+                    }
+                    
+                    const claimsList = document.createElement('div');
+                    
+                    querySnapshot.forEach(doc => {
+                        const claim = { id: doc.id, ...doc.data() };
+                        const claimItem = document.createElement('div');
+                        claimItem.className = 'item-card';
+                        claimItem.style.marginBottom = '1rem';
+                        
+                        const date = claim.timestamp ? new Date(claim.timestamp.seconds * 1000).toLocaleDateString() : 'Unknown date';
+                        
+                        claimItem.innerHTML = `
+                            <div class="item-content">
+                                <h4>Claim for Item ID: ${claim.itemId}</h4>
+                                <p><strong>Submitted:</strong> ${date}</p>
+                                <p><strong>Status:</strong> Pending Verification</p>
+                            </div>
+                        `;
+                        
+                        claimsList.appendChild(claimItem);
+                    });
+                    
+                    dashboardContent.appendChild(claimsList);
+                })
+                .catch(error => {
+                    console.error('Error loading user claims:', error);
+                    dashboardContent.innerHTML += '<p>Error loading your claims.</p>';
+                });
+        }
+
+        // Load admin panel
+        function loadAdminPanel() {
+            if (!currentUser) return;
+            
+            dashboardContent.innerHTML = '<h3>Admin Panel</h3><p>Admin features would be implemented here.</p>';
+            
+            // Check if user is actually admin/staff
+            db.collection('users').doc(currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        if (userData.role === 'staff' || userData.role === 'admin') {
+                            // Load admin-specific content
+                            loadAdminContent();
+                        } else {
+                            dashboardContent.innerHTML = '<p>Access denied. Admin privileges required.</p>';
+                        }
+                    }
+                });
+        }
+
+        // Load admin-specific content
+        function loadAdminContent() {
+            // In a real implementation, this would load admin-specific features
+            dashboardContent.innerHTML += `
+                <div class="admin-actions">
+                    <button class="btn btn-primary" onclick="loadPendingItems()">Review Pending Items</button>
+                    <button class="btn btn-primary" onclick="loadClaimVerifications()">Verify Claims</button>
+                    <button class="btn btn-primary" onclick="loadUserManagement()">Manage Users</button>
+                </div>
+                <div id="adminContent"></div>
+            `;
+        }
+
+        // Chat functionality
+        class ChatInterface {
+            constructor() {
+                this.isOpen = false;
+                this.isMinimized = false;
+                this.isTyping = false;
+                this.rateLimit = { lastRequest: 0, delay: 1000 };
+            }
+
+            toggleChat() {
+                this.isOpen = !this.isOpen;
+                if (this.isOpen) {
+                    chatWindow.classList.add('open');
+                    chatBubble.classList.add('hidden');
+                    setTimeout(() => chatInput.focus(), 100);
+                } else {
+                    chatWindow.classList.remove('open');
+                    chatBubble.classList.remove('hidden');
+                }
+            }
+
+            toggleMinimize() {
+                this.isMinimized = !this.isMinimized;
+                chatWindow.classList.toggle('minimized', this.isMinimized);
+                minimizeChat.textContent = this.isMinimized ? '+' : '−';
+            }
+
+            handleSend() {
+                const message = chatInput.value.trim();
+                if (!message) return;
+                if (this.isRateLimited()) {
+                    this.displayMessage("Assistant: Please wait a moment before sending another message.", "ai");
+                    return;
+                }
+                this.displayMessage("You: " + this.sanitizeInput(message), "user");
+                chatInput.value = '';
+                this.rateLimit.lastRequest = Date.now();
+                this.showTypingIndicator();
+                this.handleQuery(message);
+            }
+
+            isRateLimited() {
+                return Date.now() - this.rateLimit.lastRequest < this.rateLimit.delay;
+            }
+
+            sanitizeInput(input) {
+                const div = document.createElement('div');
+                div.textContent = input;
+                return div.innerHTML;
+            }
+
+            handleQuery(query) {
+                // In a real implementation, this would send to your Cloudflare Worker
+                // For now, we'll simulate a response
+                setTimeout(() => {
+                    this.hideTypingIndicator();
+                    let response = "I'm here to help you with lost and found items. ";
+                    
+                    if (query.toLowerCase().includes('lost') || query.toLowerCase().includes('find')) {
+                        response += "You can browse the found items above or use the search filters to narrow down results. ";
+                        response += "If you don't see your item, you might want to check back later or report it as lost if you have staff privileges.";
+                    } else if (query.toLowerCase().includes('claim')) {
+                        response += "To claim an item, click the 'Claim This Item' button on any found item. ";
+                        response += "You'll need to answer security questions to verify you're the rightful owner.";
+                    } else if (query.toLowerCase().includes('report')) {
+                        response += "To report a found item, click the 'Report Found Item' button. ";
+                        response += "You'll need to provide details about the item and set up security questions for verification.";
+                    } else {
+                        response += "I can help you search for lost items, understand the claiming process, or guide you through reporting found items. What would you like to know?";
+                    }
+                    
+                    this.displayMessage("Assistant: " + response, "ai");
+                }, 1000);
+            }
+
+            displayMessage(text, type) {
+                const messageElem = document.createElement('div');
+                messageElem.classList.add('message', type);
+                messageElem.textContent = text;
+                messageElem.setAttribute('aria-live', 'polite');
+                chatMessages.appendChild(messageElem);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            showTypingIndicator() {
+                const typingElem = document.createElement('div');
+                typingElem.classList.add('typing-indicator', 'visible');
+                typingElem.innerHTML = `
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                `;
+                chatMessages.appendChild(typingElem);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                const typingElem = chatMessages.querySelector('.typing-indicator');
+                if (typingElem) {
+                    typingElem.remove();
+                }
+            }
+        }
+
+        // Initialize chat
+        const chatInterface = new ChatInterface();
+
+        function toggleChat() {
+            chatInterface.toggleChat();
+        }
+
+        function toggleMinimize() {
+            chatInterface.toggleMinimize();
+        }
+
+        function handleSendChat() {
+            chatInterface.handleSend();
+        }
+
+        // Utility function to show toast messages
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }
+
+        // Global functions for admin panel (simplified)
+        window.loadPendingItems = function() {
+            document.getElementById('adminContent').innerHTML = '<p>Pending items would be listed here in a full implementation.</p>';
+        };
+
+        window.loadClaimVerifications = function() {
+            document.getElementById('adminContent').innerHTML = '<p>Claim verifications would be listed here in a full implementation.</p>';
+        };
+
+        window.loadUserManagement = function() {
+            document.getElementById('adminContent').innerHTML = '<p>User management would be available here in a full implementation.</p>';
+        };
+    </script>
 </body>
 </html>
