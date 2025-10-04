@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACLC Lost and Found</title>
+  <title>ACLC Lost and Found - Find Your Lost Items</title>
+  <meta name="description" content="ACLC College's digital lost and found system helps students and staff quickly find and claim lost items with secure verification.">
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +13,6 @@
 
   <!-- Firebase SDK -->
  <script type="module">
-  // Import the functions you need from the SDKs you need
   import {
     initializeApp
   } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -37,10 +37,10 @@
     addDoc,
     getDocs,
     query,
-    where
+    where,
+    Timestamp
   } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBASqZ7VDxU_j6VEDN9pmhIDuDM1SU9qoI",
     authDomain: "findmyaclc.firebaseapp.com",
@@ -51,14 +51,11 @@
     measurementId: "G-ZH9V9KH3H2"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Make Firebase available globally
- 
   window.auth = auth;
   window.db = db;
   window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
@@ -73,8 +70,9 @@
   window.collection = collection;
   window.query = query;
   window.where = where;
+  window.addDoc = addDoc;
+  window.Timestamp = Timestamp;
 
-  // SINGLE Auth state listener (updated for role-based dashboards)
   onAuthStateChanged(auth, async (user) => {
     const authButtons = document.querySelector('.auth-buttons');
     const homepage = document.getElementById('homepage');
@@ -82,17 +80,14 @@
     const staffDashboard = document.getElementById('staffDashboard');
     
     if (user && user.emailVerified) {
-      // User is signed in and verified
       homepage.style.display = 'none';
       
-      // Get user data to determine role
       let userData = null;
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           userData = userDoc.data();
           
-          // SYNC EMAIL VERIFICATION STATUS
           const currentEmailVerified = userDoc.data().emailVerified;
           if (currentEmailVerified !== user.emailVerified) {
             await setDoc(doc(db, "users", user.uid), {
@@ -107,396 +102,76 @@
       const username = userData?.username || user.email.split('@')[0];
       const userType = userData?.userType || 'student';
       
-      // Update header welcome
       authButtons.innerHTML = `
-        <span class="user-welcome">Welcome, ${username} (${userType})</span>
-        <button class="sign-out-btn">Sign Out</button>
+        <span class="user-welcome" data-testid="text-user-welcome">Welcome, ${username}</span>
+        <button class="sign-out-btn" data-testid="button-signout">Sign Out</button>
       `;
       
-      // Show appropriate dashboard based on user type
       if (userType === 'staff') {
         studentDashboard.style.display = 'none';
         staffDashboard.style.display = 'block';
         document.getElementById('staffDashboardWelcome').textContent = `Welcome, ${username}!`;
-        loadStaffDashboard();
+        window.loadStaffDashboard();
       } else {
         staffDashboard.style.display = 'none';
         studentDashboard.style.display = 'block';
         document.getElementById('studentDashboardWelcome').textContent = `Welcome, ${username}!`;
-        loadStudentDashboard();
+        window.loadStudentDashboard();
       }
       
     } else if (user && !user.emailVerified) {
-      // User is signed in but not verified
       homepage.style.display = 'block';
       studentDashboard.style.display = 'none';
       staffDashboard.style.display = 'none';
       authButtons.innerHTML = `
-        <span class="user-welcome">Welcome (Unverified)</span>
-        <button class="sign-out-btn">Sign Out</button>
+        <span class="user-welcome" data-testid="text-email-not-verified">Email Not Verified</span>
+        <button class="sign-out-btn" data-testid="button-signout">Sign Out</button>
       `;
       
-      showVerificationReminder(user);
+      window.showVerificationReminder(user);
     } else {
-      // User is signed out
       homepage.style.display = 'block';
       studentDashboard.style.display = 'none';
       staffDashboard.style.display = 'none';
       authButtons.innerHTML = `
-        <button class="sign-in-btn">Sign In</button>
-        <button class="sign-up-btn">Sign Up</button>
+        <button class="sign-in-btn" data-testid="button-signin">Sign In</button>
+        <button class="sign-up-btn" data-testid="button-signup">Sign Up</button>
       `;
     }
     
-    // Add event listeners
-    document.querySelector('.sign-in-btn')?.addEventListener('click', showSignInModal);
-    document.querySelector('.sign-up-btn')?.addEventListener('click', showSignUpModal);
-    document.querySelector('.sign-out-btn')?.addEventListener('click', handleSignOut);
+    document.querySelector('.sign-in-btn')?.addEventListener('click', window.showSignInModal);
+    document.querySelector('.sign-up-btn')?.addEventListener('click', window.showSignUpModal);
+    document.querySelector('.sign-out-btn')?.addEventListener('click', () => {
+      signOut(auth).then(() => console.log('User signed out'))
+        .catch((error) => console.error('Sign out error:', error));
+    });
   });
 
-  // Student Dashboard Functions
-  async function loadStudentDashboard() {
-    try {
-      const user = auth.currentUser;
-      if (!user) return;
-      
-      // Load recent lost items (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const lostItemsQuery = query(
-        collection(db, "items"), 
-        where("type", "==", "lost"),
-        where("date", ">=", thirtyDaysAgo)
-      );
-      const lostItemsSnapshot = await getDocs(lostItemsQuery);
-      const lostItems = lostItemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // Load recent found items (last 30 days)
-      const foundItemsQuery = query(
-        collection(db, "items"), 
-        where("type", "==", "found"),
-        where("date", ">=", thirtyDaysAgo)
-      );
-      const foundItemsSnapshot = await getDocs(foundItemsQuery);
-      const foundItems = foundItemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // Load student's personal stats
-      const userClaimsQuery = query(
-        collection(db, "claims"),
-        where("claimedBy", "==", user.uid)
-      );
-      const userClaimsSnapshot = await getDocs(userClaimsQuery);
-      const userClaims = userClaimsSnapshot.docs.map(doc => doc.data());
-      
-      const pendingClaims = userClaims.filter(claim => claim.status === 'pending');
-      const userLostItemsQuery = query(
-        collection(db, "items"),
-        where("reportedBy", "==", user.uid),
-        where("type", "==", "lost")
-      );
-      const userLostItemsSnapshot = await getDocs(userLostItemsQuery);
-      
-      // Update UI
-      updateItemsList('studentLostItemsList', lostItems.slice(0, 10)); // Show only 10 most recent
-      updateItemsList('studentFoundItemsList', foundItems.slice(0, 10));
-      
-      // Update student stats
-      document.getElementById('studentLostCount').textContent = userLostItemsSnapshot.size;
-      document.getElementById('studentClaimedCount').textContent = userClaims.length;
-      document.getElementById('studentPendingCount').textContent = pendingClaims.length;
-      
-    } catch (error) {
-      console.error("Error loading student dashboard:", error);
-    }
-  }
-
-  // Staff Dashboard Functions
-  async function loadStaffDashboard() {
-    try {
-      // Load all items for staff
-      const lostItemsQuery = query(collection(db, "items"), where("type", "==", "lost"));
-      const lostItemsSnapshot = await getDocs(lostItemsQuery);
-      const lostItems = lostItemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      const foundItemsQuery = query(collection(db, "items"), where("type", "==", "found"));
-      const foundItemsSnapshot = await getDocs(foundItemsQuery);
-      const foundItems = foundItemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // Load pending claims
-      const pendingClaimsQuery = query(
-        collection(db, "claims"),
-        where("status", "==", "pending")
-      );
-      const pendingClaimsSnapshot = await getDocs(pendingClaimsQuery);
-      const pendingClaims = pendingClaimsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // Load stats
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const resolvedClaimsQuery = query(
-        collection(db, "claims"),
-        where("status", "in", ["approved", "rejected"]),
-        where("resolvedAt", ">=", weekAgo)
-      );
-      const resolvedClaimsSnapshot = await getDocs(resolvedClaimsQuery);
-      
-      // Update UI
-      updateItemsList('staffLostItemsList', lostItems);
-      updateItemsList('staffFoundItemsList', foundItems.filter(item => item.status !== 'claimed'));
-      updatePendingClaimsList(pendingClaims);
-      
-      // Update staff stats
-      document.getElementById('totalItemsCount').textContent = lostItemsSnapshot.size + foundItemsSnapshot.size;
-      document.getElementById('pendingClaimsCount').textContent = pendingClaimsSnapshot.size;
-      document.getElementById('resolvedClaimsCount').textContent = resolvedClaimsSnapshot.size;
-      
-    } catch (error) {
-      console.error("Error loading staff dashboard:", error);
-    }
-  }
-
-  function updatePendingClaimsList(claims) {
-    const listElement = document.getElementById('pendingClaimsList');
-    if (claims.length === 0) {
-      listElement.innerHTML = '<div class="no-items">No pending claims at the moment</div>';
-      return;
-    }
-    
-    listElement.innerHTML = claims.map(claim => `
-      <div class="item-card">
-        <div class="item-header">
-          <h4>Claim for: ${claim.itemName}</h4>
-          <span class="claim-status pending">Pending Review</span>
-        </div>
-        <p class="item-description">Claimed by: ${claim.claimedByName || 'User'}</p>
-        <div class="item-details">
-          <span class="item-date">📅 Claimed on: ${new Date(claim.claimedAt?.toDate()).toLocaleDateString()}</span>
-        </div>
-        <div class="staff-action-buttons">
-          <button class="staff-action-btn approve-btn" onclick="processClaim('${claim.id}', 'approved')">Approve</button>
-          <button class="staff-action-btn reject-btn" onclick="processClaim('${claim.id}', 'rejected')">Reject</button>
-          <button class="staff-action-btn view-btn" onclick="viewClaimDetails('${claim.id}')">Details</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // Add these new global functions
-  window.processClaim = async (claimId, status) => {
-    try {
-      await setDoc(doc(db, "claims", claimId), {
-        status: status,
-        resolvedAt: new Date(),
-        resolvedBy: auth.currentUser.uid
-      }, { merge: true });
-      
-      alert(`Claim ${status} successfully!`);
-      loadStaffDashboard(); // Refresh the dashboard
-    } catch (error) {
-      console.error("Error processing claim:", error);
-      alert("Error processing claim. Please try again.");
-    }
-  };
-
-  window.viewClaimDetails = (claimId) => {
-    alert(`Viewing claim details for ${claimId} - This feature will be implemented soon!`);
-  };
-
-  window.showMyClaims = () => {
-    alert("Showing your claims - This feature will be implemented soon!");
-  };
-
-  window.showAllClaims = () => {
-    alert("Showing all claims - This feature will be implemented soon!");
-  };
-
-  window.showAnalytics = () => {
-    alert("Showing analytics - This feature will be implemented soon!");
-  };
-
-  // Update the existing searchItems function to handle both dashboards
-  window.searchItems = (dashboardType) => {
-    const searchTerm = document.getElementById(`${dashboardType}SearchInput`).value.toLowerCase();
-    alert(`Searching for: ${searchTerm} in ${dashboardType} dashboard - This feature will be implemented soon!`);
-  };
-
-  // Case-insensitive duplicate check function
-  window.checkForDuplicateUser = async function(username, userType, studentId, staffId, email) {
-    try {
-      const usersRef = collection(window.db, "users");
-      const allUsersSnapshot = await getDocs(usersRef);
-      
-      // Check for duplicate email (case-insensitive)
-      if (email) {
-        const emailExists = allUsersSnapshot.docs.some(doc => {
-          const userData = doc.data();
-          return userData.email && userData.email.toLowerCase() === email.toLowerCase();
-        });
-        
-        if (emailExists) {
-          return {
-            exists: true,
-            message: "This email address is already registered. Please sign in or use a different email address."
-          };
-        }
-      }
-      
-      // Check for duplicate username (case-insensitive)
-      if (username) {
-        const usernameExists = allUsersSnapshot.docs.some(doc => {
-          const userData = doc.data();
-          return userData.username && userData.username.toLowerCase() === username.toLowerCase();
-        });
-        
-        if (usernameExists) {
-          return {
-            exists: true,
-            message: "This username is already taken. Please choose a different username."
-          };
-        }
-      }
-      
-      // Check for duplicate student ID (exact match since IDs are numbers)
-      if (userType === "student" && studentId) {
-        const studentIdExists = allUsersSnapshot.docs.some(doc => {
-          const userData = doc.data();
-          return userData.studentId && userData.studentId === studentId;
-        });
-        
-        if (studentIdExists) {
-          return {
-            exists: true,
-            message: "This student ID is already registered. If this is your ID, please sign in with your existing account."
-          };
-        }
-      }
-      
-      // Check for duplicate staff ID (exact match)
-      if (userType === "staff" && staffId) {
-        const staffIdExists = allUsersSnapshot.docs.some(doc => {
-          const userData = doc.data();
-          return userData.staffId && userData.staffId === staffId;
-        });
-        
-        if (staffIdExists) {
-          return {
-            exists: true,
-            message: "This staff ID is already registered. If this is your ID, please sign in with your existing account."
-          };
-        }
-      }
-      
-      return { exists: false, message: "" };
-      
-    } catch (error) {
-      console.error("Error checking for duplicate user:", error);
-      return { 
-        exists: false, 
-        message: "Note: Could not verify username availability due to connection issues." 
-      };
-    }
-  };
-
-  function handleSignOut() {
-    signOut(auth).then(() => {
-      console.log('User signed out');
-    }).catch((error) => {
-      console.error('Sign out error:', error);
-    });
-  }
-  
-  async function loadDashboardData() {
-    try {
-      // Load lost items
-      const lostItemsQuery = query(collection(db, "items"), where("type", "==", "lost"));
-      const lostItemsSnapshot = await getDocs(lostItemsQuery);
-      const lostItems = lostItemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      // Load found items
-      const foundItemsQuery = query(collection(db, "items"), where("type", "==", "found"));
-      const foundItemsSnapshot = await getDocs(foundItemsQuery);
-      const foundItems = foundItemsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      // Update UI
-      updateItemsList('lostItemsList', lostItems);
-      updateItemsList('foundItemsList', foundItems);
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-    }
-  }
-
-  function updateItemsList(listId, items) {
-    const listElement = document.getElementById(listId);
-    if (items.length === 0) {
-      listElement.innerHTML = '<div class="no-items">No items found</div>';
-      return;
-    }
-    listElement.innerHTML = items.map(item => `
-      <div class="item-card">
-        <div class="item-header">
-          <h4>${item.name}</h4>
-          <span class="item-status ${item.status}">${item.status}</span>
-        </div>
-        <p class="item-description">${item.description}</p>
-        <div class="item-details">
-          <span class="item-location">📍 ${item.location}</span>
-          <span class="item-date">📅 ${new Date(item.date).toLocaleDateString()}</span>
-        </div>
-        <div class="item-actions">
-          <button class="action-btn claim-btn" onclick="claimItem('${item.id}')">Claim</button>
-          <button class="action-btn details-btn" onclick="viewItemDetails('${item.id}')">Details</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function showVerificationReminder(user) {
-    // Create verification reminder modal
+  window.showVerificationReminder = function(user) {
     const verificationModal = document.createElement('div');
     verificationModal.id = 'verificationModal';
     verificationModal.className = 'modal';
     verificationModal.innerHTML = `
-      <div class="modal-content verification-content">
-        <h2>📧 Verify Your Email</h2>
-        <p>We've sent a verification link to <strong>${user.email}</strong></p>
-        <p>Please check your inbox and click the verification link to activate your account.</p>
-        <div class="verification-steps">
-          <div class="step">1. Check your email inbox</div>
-          <div class="step">2. Find our verification email</div>
-          <div class="step">3. Click the verification link</div>
-          <div class="step">4. Return here and refresh the page</div>
+      <div class="modal-content verification-content" data-testid="modal-verification-content">
+        <h2 data-testid="heading-verify-email">Verify Your Email</h2>
+        <p data-testid="text-verification-instructions">We've sent a verification link to <strong>${user.email}</strong></p>
+        <p data-testid="text-verification-action">Please check your inbox and click the verification link to activate your account.</p>
+        <div class="verification-steps" data-testid="container-verification-steps">
+          <div class="step" data-testid="step-1">1. Check your email inbox</div>
+          <div class="step" data-testid="step-2">2. Find our verification email</div>
+          <div class="step" data-testid="step-3">3. Click the verification link</div>
+          <div class="step" data-testid="step-4">4. Return here and refresh the page</div>
         </div>
-        <div class="verification-actions">
-          <button id="resendVerification" class="auth-submit-btn">Resend Verification Email</button>
-          <button id="closeVerification" class="auth-submit-btn secondary">Close</button>
+        <div class="verification-actions" data-testid="container-verification-actions">
+          <button id="resendVerification" class="auth-submit-btn" data-testid="button-resend-verification">Resend Verification Email</button>
+          <button id="closeVerification" class="auth-submit-btn secondary" data-testid="button-close-verification">Close</button>
         </div>
-        <p class="verification-note">You need to verify your email to access the dashboard.</p>
+        <p class="verification-note" data-testid="text-verification-note">You need to verify your email to access the dashboard.</p>
       </div>
     `;
     document.body.appendChild(verificationModal);
     verificationModal.style.display = 'block';
 
-    // Add event listeners
     document.getElementById('resendVerification').addEventListener('click', function() {
       sendEmailVerification(user).then(() => {
         alert('Verification email sent! Please check your inbox.');
@@ -509,14 +184,12 @@
       verificationModal.remove();
     });
 
-    // Close when clicking outside
     verificationModal.addEventListener('click', function(event) {
       if (event.target === verificationModal) {
         verificationModal.remove();
       }
     });
 
-    // Auto-check for email verification every 5 seconds
     const checkVerificationInterval = setInterval(async () => {
       try {
         await user.reload();
@@ -529,366 +202,340 @@
       } catch (error) {
         console.error('Error checking verification status:', error);
       }
-    }, 1000);
+    }, 5000);
 
-    // Clean up interval when modal is closed
     verificationModal.addEventListener('close', () => {
       clearInterval(checkVerificationInterval);
     });
-  }
-
-  // Make functions globally available
-  window.showSignInModal = showSignInModal;
-  window.showSignUpModal = showSignUpModal;
-  window.showVerificationReminder = showVerificationReminder;
-  window.loadDashboardData = loadDashboardData;
-  window.claimItem = (itemId) => {
-    alert(`Claiming item ${itemId} - This feature will be implemented soon!`);
-  };
-  window.viewItemDetails = (itemId) => {
-    alert(`Viewing details for item ${itemId} - This feature will be implemented soon!`);
-  };
-  window.searchItems = () => {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    alert(`Searching for: ${searchTerm} - This feature will be implemented soon!`);
-  };
-  window.reportItem = (type) => {
-    alert(`Reporting ${type} item - This feature will be implemented soon!`);
   };
 </script>
 </head>
 
 <body>
-  <header class="header">
-    <div class="logo-container">
-      <div class="logo">
+  <header class="header" data-testid="header-main">
+    <div class="logo-container" data-testid="logo-container">
+      <div class="logo" data-testid="logo-icon">
         <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="logo-text">ACLC Lost & Found</div>
+      <div class="logo-text" data-testid="text-logo">ACLC Lost & Found</div>
     </div>
 
-    <div class="auth-buttons">
-      <button class="sign-in-btn">Sign In</button>
-      <button class="sign-up-btn">Sign Up</button>
+    <div class="auth-buttons" data-testid="container-auth-buttons">
+      <button class="sign-in-btn" data-testid="button-signin">Sign In</button>
+      <button class="sign-up-btn" data-testid="button-signup">Sign Up</button>
     </div>
   </header>
 
-  <!-- Homepage (Visible when not logged in) -->
-  <main id="homepage" class="content">
-    <div class="content-box">
-      <h2>Lost Something? We'll Help You Find It</h2>
-      <p class="box-description">ACLC College's digital lost and found system helps reunite students and staff with their missing belongings quickly and securely.</p>
+  <!-- Homepage -->
+  <main id="homepage" class="content" data-testid="page-homepage">
+    <div class="content-box" data-testid="container-hero">
+      <h2 data-testid="heading-hero">Lost Something? We'll Help You Find It</h2>
+      <p class="box-description" data-testid="text-hero-description">ACLC College's digital lost and found system helps reunite students and staff with their missing belongings quickly and securely.</p>
 
-      <div class="box-content">
-        <div class="feature">
-          <div class="feature-icon">
+      <div class="box-content" data-testid="container-features">
+        <div class="feature" data-testid="feature-search">
+          <div class="feature-icon" data-testid="icon-search">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <h3>Search Lost Items</h3>
-          <p>Browse through our database of found items to see if your lost item has been turned in.</p>
+          <h3 data-testid="heading-feature-search">Search Lost Items</h3>
+          <p data-testid="text-feature-search">Browse through our database of found items to see if your lost item has been turned in.</p>
         </div>
-        <div class="feature">
-          <div class="feature-icon">
+        <div class="feature" data-testid="feature-report">
+          <div class="feature-icon" data-testid="icon-report">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <h3>Report Lost Item</h3>
-          <p>Fill out a form to report your lost item with details and contact information.</p>
+          <h3 data-testid="heading-feature-report">Report Items</h3>
+          <p data-testid="text-feature-report">Found something? Report it so the owner can claim it back.</p>
         </div>
-        <div class="feature">
-          <div class="feature-icon">
+        <div class="feature" data-testid="feature-claim">
+          <div class="feature-icon" data-testid="icon-claim">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <h3>Claim Found Item</h3>
-          <p>If you found an item, report it here to help reunite it with its owner.</p>
+          <h3 data-testid="heading-feature-claim">Claim Process</h3>
+          <p data-testid="text-feature-claim">Simple verification process to ensure items reach their rightful owners.</p>
         </div>
       </div>
     </div>
 
-    <!-- Additional Feature Boxes -->
-    <div class="additional-features">
-      <div class="feature-box">
-        <div class="feature-icon">
+    <div class="additional-features" data-testid="container-additional-features">
+      <div class="feature-box" data-testid="feature-realtime">
+        <div class="feature-icon" data-testid="icon-realtime">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 15V17M6 21H18C19.1046 21 20 20.1046 20 19V13C20 11.8954 19.1046 11 18 11H6C4.89543 11 4 11.8954 4 13V19C4 20.1046 4.89543 21 6 21ZM16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11H16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 6V12L16 14M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h3>Secure Claims</h3>
-        <p>Our verification process ensures items are returned to their rightful owners through secure identity confirmation and item matching.</p>
+        <h3 data-testid="heading-feature-realtime">Real-Time Updates</h3>
+        <p data-testid="text-feature-realtime">Get notified immediately when items matching your description are found.</p>
       </div>
-      <div class="feature-box">
-        <div class="feature-icon">
+      <div class="feature-box" data-testid="feature-secure">
+        <div class="feature-icon" data-testid="icon-secure">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 17H20L18.5951 15.5951C18.2141 15.2141 18 14.6973 18 14.1585V11C18 8.38757 16.3304 6.16509 14 5.34142V5C14 3.89543 13.1046 3 12 3C10.8954 3 10 3.89543 10 5V5.34142C7.66962 6.16509 6 8.38757 6 11V14.1585C6 14.6973 5.78595 15.2141 5.40493 15.5951L4 17H9M15 17V18C15 19.6569 13.6569 21 12 21C10.3431 21 9 19.6569 9 18V17M15 17H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 15V3M12 15C10.3431 15 9 16.3431 9 18C9 19.6569 10.3431 21 12 21C13.6569 21 15 19.6569 15 18C15 16.3431 13.6569 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h3>Smart Notifications</h3>
-        <p>Get instant alerts when items matching your description are found, and receive status updates throughout the recovery process.</p>
+        <h3 data-testid="heading-feature-secure">Secure Storage</h3>
+        <p data-testid="text-feature-secure">All found items are stored securely until claimed by verified owners.</p>
+      </div>
+      <div class="feature-box" data-testid="feature-community">
+        <div class="feature-icon" data-testid="icon-community">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 20H22V18C22 16.3431 20.6569 15 19 15C18.0444 15 17.1931 15.4468 16.6438 16.1429M17 20H7M17 20V18C17 17.3438 16.8736 16.717 16.6438 16.1429M7 20H2V18C2 16.3431 3.34315 15 5 15C5.95561 15 6.80686 15.4468 7.35625 16.1429M7 20V18C7 17.3438 7.12642 16.717 7.35625 16.1429M7.35625 16.1429C8.0935 14.301 9.89482 13 12 13C14.1052 13 15.9065 14.301 16.6438 16.1429M15 7C15 8.65685 13.6569 10 12 10C10.3431 10 9 8.65685 9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7ZM21 10C21 11.1046 20.1046 12 19 12C17.8954 12 17 11.1046 17 10C17 8.89543 17.8954 8 19 8C20.1046 8 21 8.89543 21 10ZM7 10C7 11.1046 6.10457 12 5 12C3.89543 12 3 11.1046 3 10C3 8.89543 3.89543 8 5 8C6.10457 8 7 8.89543 7 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 data-testid="heading-feature-community">Community Driven</h3>
+        <p data-testid="text-feature-community">Join our community of students and staff helping each other find lost items.</p>
       </div>
     </div>
 
-    <!-- Statistics Box -->
-    <div class="stats-box">
-      <h2>Our Impact</h2>
-      <div class="stats-container">
-        <div class="stat-item">
-          <div class="stat-number">1,247</div>
-          <div class="stat-label">Items Found</div>
+    <div class="stats-box" data-testid="container-stats">
+      <h2 data-testid="heading-stats">System Statistics</h2>
+      <div class="stats-container" data-testid="container-stats-grid">
+        <div class="stat-item" data-testid="stat-items-returned">
+          <div class="stat-number" data-testid="stat-number-items">247</div>
+          <div class="stat-label" data-testid="stat-label-items">Items Returned</div>
         </div>
-        <div class="stat-item">
-          <div class="stat-number">983</div>
-          <div class="stat-label">Successful Returns</div>
+        <div class="stat-item" data-testid="stat-success-rate">
+          <div class="stat-number" data-testid="stat-number-success">89%</div>
+          <div class="stat-label" data-testid="stat-label-success">Success Rate</div>
         </div>
-        <div class="stat-item">
-          <div class="stat-number">78.8%</div>
-          <div class="stat-label">Success Rate</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">24h</div>
-          <div class="stat-label">Avg Response Time</div>
+        <div class="stat-item" data-testid="stat-active-users">
+          <div class="stat-number" data-testid="stat-number-users">500+</div>
+          <div class="stat-label" data-testid="stat-label-users">Active Users</div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Student Dashboard (Hidden by default) -->
-  <div id="studentDashboard" class="dashboard" style="display: none;">
-    <div class="dashboard-header">
-      <h1 id="studentDashboardWelcome">Welcome!</h1>
-      <p>Manage your lost and found items</p>
+  <!-- Student Dashboard -->
+  <div id="studentDashboard" class="dashboard" style="display: none;" data-testid="page-student-dashboard">
+    <div class="dashboard-header" data-testid="container-dashboard-header">
+      <h1 id="studentDashboardWelcome" data-testid="heading-student-welcome">Welcome!</h1>
+      <p data-testid="text-dashboard-subtitle">Your dashboard for finding and reporting lost items</p>
     </div>
 
-    <div class="dashboard-stats">
-      <div class="stat-card">
-        <div class="stat-value" id="studentLostCount">0</div>
-        <div class="stat-label">Items Lost</div>
+    <div class="dashboard-stats" data-testid="container-student-stats">
+      <div class="stat-card" data-testid="card-student-lost">
+        <div class="stat-value" id="studentLostCount" data-testid="stat-student-lost-count">0</div>
+        <div class="stat-title" data-testid="stat-student-lost-label">Items I Lost</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="studentClaimedCount">0</div>
-        <div class="stat-label">Items Claimed</div>
+      <div class="stat-card" data-testid="card-student-claimed">
+        <div class="stat-value" id="studentClaimedCount" data-testid="stat-student-claimed-count">0</div>
+        <div class="stat-title" data-testid="stat-student-claimed-label">Items Claimed</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="studentPendingCount">0</div>
-        <div class="stat-label">Pending Claims</div>
-      </div>
-    </div>
-
-    <div class="dashboard-actions">
-      <div class="search-bar">
-        <input type="text" id="studentSearchInput" placeholder="Search items...">
-        <button class="search-btn" onclick="searchItems('student')">Search</button>
-      </div>
-      <div class="action-buttons">
-        <button class="report-btn lost-btn" onclick="reportItem('lost')">Report Lost</button>
-        <button class="report-btn found-btn" onclick="reportItem('found')">Report Found</button>
+      <div class="stat-card" data-testid="card-student-pending">
+        <div class="stat-value" id="studentPendingCount" data-testid="stat-student-pending-count">0</div>
+        <div class="stat-title" data-testid="stat-student-pending-label">Pending Claims</div>
       </div>
     </div>
 
-    <div class="dashboard-content">
-      <div class="items-section">
-        <div class="items-column">
-          <h3>Lost Items</h3>
-          <div class="items-list" id="studentLostItemsList">
-            <div class="no-items">No lost items to display</div>
-          </div>
-        </div>
-        <div class="items-column">
-          <h3>Found Items</h3>
-          <div class="items-list" id="studentFoundItemsList">
-            <div class="no-items">No found items to display</div>
-          </div>
+    <div class="dashboard-actions" data-testid="container-student-actions">
+      <button class="action-button primary" onclick="reportItem('lost')" data-testid="button-report-lost">
+        Report Lost Item
+      </button>
+      <button class="action-button secondary" onclick="reportItem('found')" data-testid="button-report-found">
+        Report Found Item
+      </button>
+    </div>
+
+    <div class="dashboard-section" data-testid="section-recent-lost">
+      <div class="section-header" data-testid="container-section-header">
+        <h2 data-testid="heading-recent-lost">Recent Lost Items</h2>
+        <div class="search-bar" data-testid="searchbar-student">
+          <input type="text" id="studentSearchInput" placeholder="Search items..." data-testid="input-student-search">
+          <button onclick="searchItems('student')" data-testid="button-student-search">Search</button>
         </div>
       </div>
+      <div id="studentLostItemsList" class="items-grid" data-testid="list-student-lost-items"></div>
+    </div>
+
+    <div class="dashboard-section" data-testid="section-recent-found">
+      <div class="section-header" data-testid="container-section-header-found">
+        <h2 data-testid="heading-recent-found">Recent Found Items</h2>
+      </div>
+      <div id="studentFoundItemsList" class="items-grid" data-testid="list-student-found-items"></div>
     </div>
   </div>
 
-  <!-- Staff Dashboard (Hidden by default) -->
-  <div id="staffDashboard" class="dashboard" style="display: none;">
-    <div class="dashboard-header">
-      <h1 id="staffDashboardWelcome">Staff Dashboard</h1>
-      <p>Review and manage all lost and found items</p>
+  <!-- Staff Dashboard -->
+  <div id="staffDashboard" class="dashboard" style="display: none;" data-testid="page-staff-dashboard">
+    <div class="dashboard-header" data-testid="container-staff-header">
+      <h1 id="staffDashboardWelcome" data-testid="heading-staff-welcome">Staff Dashboard</h1>
+      <p data-testid="text-staff-subtitle">Manage lost and found items and review claims</p>
     </div>
 
-    <div class="dashboard-stats">
-      <div class="stat-card">
-        <div class="stat-value" id="totalItemsCount">0</div>
-        <div class="stat-label">Total Items</div>
+    <div class="dashboard-stats" data-testid="container-staff-stats">
+      <div class="stat-card" data-testid="card-total-items">
+        <div class="stat-value" id="totalItemsCount" data-testid="stat-total-items-count">0</div>
+        <div class="stat-title" data-testid="stat-total-items-label">Total Items</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="pendingClaimsCount">0</div>
-        <div class="stat-label">Pending Claims</div>
+      <div class="stat-card" data-testid="card-pending-claims">
+        <div class="stat-value" id="pendingClaimsCount" data-testid="stat-pending-claims-count">0</div>
+        <div class="stat-title" data-testid="stat-pending-claims-label">Pending Claims</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="resolvedClaimsCount">0</div>
-        <div class="stat-label">Resolved (Week)</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">Active</div>
-        <div class="stat-label">Status</div>
+      <div class="stat-card" data-testid="card-resolved-claims">
+        <div class="stat-value" id="resolvedClaimsCount" data-testid="stat-resolved-claims-count">0</div>
+        <div class="stat-title" data-testid="stat-resolved-claims-label">Resolved (7 days)</div>
       </div>
     </div>
 
-    <div class="dashboard-content">
-      <div class="pending-claims-section">
-        <h3>Pending Claims - Requires Action</h3>
-        <div id="pendingClaimsList" class="items-list">
-          <div class="no-items">No pending claims</div>
-        </div>
+    <div class="dashboard-section" data-testid="section-pending-claims">
+      <div class="section-header" data-testid="container-pending-claims-header">
+        <h2 data-testid="heading-pending-claims">Pending Claims</h2>
       </div>
+      <div id="pendingClaimsList" class="items-grid" data-testid="list-pending-claims"></div>
+    </div>
 
-      <div class="items-section" style="margin-top: 40px;">
-        <div class="items-column">
-          <h3>All Lost Items</h3>
-          <div class="items-list" id="staffLostItemsList">
-            <div class="no-items">No items to display</div>
-          </div>
-        </div>
-        <div class="items-column">
-          <h3>All Found Items</h3>
-          <div class="items-list" id="staffFoundItemsList">
-            <div class="no-items">No items to display</div>
-          </div>
+    <div class="dashboard-section" data-testid="section-staff-lost">
+      <div class="section-header" data-testid="container-staff-lost-header">
+        <h2 data-testid="heading-staff-lost">Lost Items</h2>
+        <div class="search-bar" data-testid="searchbar-staff">
+          <input type="text" id="staffSearchInput" placeholder="Search items..." data-testid="input-staff-search">
+          <button onclick="searchItems('staff')" data-testid="button-staff-search">Search</button>
         </div>
       </div>
+      <div id="staffLostItemsList" class="items-grid" data-testid="list-staff-lost-items"></div>
+    </div>
+
+    <div class="dashboard-section" data-testid="section-staff-found">
+      <div class="section-header" data-testid="container-staff-found-header">
+        <h2 data-testid="heading-staff-found">Found Items</h2>
+      </div>
+      <div id="staffFoundItemsList" class="items-grid" data-testid="list-staff-found-items"></div>
     </div>
   </div>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-content">
-      <div class="footer-section">
-        <h3>About</h3>
-        <ul>
-          <li><a href="#">About ACLC</a></li>
-          <li><a href="#">Contact Us</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h3>Quick Links</h3>
-        <ul>
-          <li><a href="#">Report Lost Item</a></li>
-          <li><a href="#">Browse Found Items</a></li>
-          <li><a href="#">My Claims</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h3>Help</h3>
-        <ul>
-          <li><a href="#">FAQ</a></li>
-          <li><a href="#">How to Report</a></li>
-          <li><a href="#">Support</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; 2024 ACLC Lost and Found. All rights reserved.</p>
-    </div>
-  </footer>
 
   <!-- Auth Modal -->
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-
+  <div id="authModal" class="modal" data-testid="modal-auth">
+    <div class="modal-content" data-testid="modal-auth-content">
+      <span class="close-modal" data-testid="button-close-modal">&times;</span>
+      
       <!-- Sign In Form -->
-      <form id="signInForm" class="auth-form" style="display: none;">
-        <h2>Welcome Back</h2>
-        <div class="form-group">
-          <label for="signInEmail">Email</label>
-          <input type="email" id="signInEmail" placeholder="your.email@aclc.edu" required>
-        </div>
-        <div class="form-group">
-          <label for="signInPassword">Password</label>
-          <input type="password" id="signInPassword" placeholder="Enter your password" required>
-        </div>
-        <button type="submit" id="signInFormElement" class="auth-submit-btn">Sign In</button>
-        <div class="auth-switch">
-          <p>Don't have an account? <a href="#" id="switchToSignUp">Sign up</a></p>
-          <p><a href="#" id="forgotPasswordLink">Forgot your password?</a></p>
-        </div>
-        <div id="authMessage" class="auth-message"></div>
-      </form>
+      <div id="signInForm" style="display: block;" data-testid="form-signin-container">
+        <form id="signInFormElement" class="auth-form" data-testid="form-signin">
+          <h2 data-testid="heading-signin">Sign In</h2>
+          
+          <div class="form-group" data-testid="formgroup-signin-email">
+            <label for="signInEmail" data-testid="label-signin-email">Email Address</label>
+            <input type="email" id="signInEmail" placeholder="your.email@aclc.edu.ph" required data-testid="input-signin-email">
+          </div>
+
+          <div class="form-group" data-testid="formgroup-signin-password">
+            <label for="signInPassword" data-testid="label-signin-password">Password</label>
+            <input type="password" id="signInPassword" placeholder="Enter your password" required data-testid="input-signin-password">
+          </div>
+
+          <div class="forgot-password-link" data-testid="container-forgot-password">
+            <a href="#" id="forgotPasswordLink" data-testid="link-forgot-password">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="auth-submit-btn" data-testid="button-signin-submit">Sign In</button>
+          
+          <div class="auth-message" id="authMessage" data-testid="message-auth"></div>
+
+          <div class="auth-switch" data-testid="container-switch-signup">
+            Don't have an account? <a href="#" id="switchToSignUp" data-testid="link-switch-signup">Sign Up</a>
+          </div>
+        </form>
+      </div>
 
       <!-- Sign Up Form -->
-      <form id="signUpForm" class="auth-form" style="display: none;">
-        <h2>Create Account</h2>
-        <div class="form-group">
-          <label for="signUpUsername">Username</label>
-          <input type="text" id="signUpUsername" placeholder="Choose a username" required>
-        </div>
-        <div class="form-group">
-          <label for="signUpEmail">Email</label>
-          <input type="email" id="signUpEmail" placeholder="your.email@aclc.edu" required>
-        </div>
-        <div class="form-group">
-          <label>I am a...</label>
-          <div class="radio-group">
-            <label class="radio-label">
-              <input type="radio" name="userType" value="student" required>
-              <span class="radio-custom"></span>
-              Student
-            </label>
-            <label class="radio-label">
-              <input type="radio" name="userType" value="staff">
-              <span class="radio-custom"></span>
-              Staff
-            </label>
+      <div id="signUpForm" style="display: none;" data-testid="form-signup-container">
+        <form id="signUpFormElement" class="auth-form" data-testid="form-signup">
+          <h2 data-testid="heading-signup">Create Account</h2>
+          
+          <div class="form-group" data-testid="formgroup-username">
+            <label for="signUpUsername" data-testid="label-username">Username</label>
+            <input type="text" id="signUpUsername" placeholder="Choose a username" required data-testid="input-username">
+            <div id="usernameAvailability" class="input-hint" data-testid="hint-username"></div>
           </div>
-        </div>
-        <div id="studentIdGroup" class="form-group id-input-group" style="display: none;">
-          <label for="studentId">Student ID</label>
-          <input type="text" id="studentId" placeholder="Enter 11-digit student ID">
-        </div>
-        <div id="staffIdGroup" class="form-group id-input-group" style="display: none;">
-          <label for="staffId">Staff ID</label>
-          <input type="text" id="staffId" placeholder="Enter your staff ID">
-        </div>
-        <div class="form-group">
-          <label for="signUpPassword">Password</label>
-          <input type="password" id="signUpPassword" placeholder="Create a password" required>
-          <div class="password-strength">
-            <div class="strength-bar"></div>
-            <div class="strength-text">Strength: <span id="strengthMessage">Weak</span></div>
+
+          <div class="form-group" data-testid="formgroup-usertype">
+            <label data-testid="label-usertype">I am a:</label>
+            <div class="radio-group" data-testid="radiogroup-usertype">
+              <label class="radio-label" data-testid="label-radio-student">
+                <input type="radio" name="userType" value="student" required data-testid="radio-student">
+                <span class="radio-custom" data-testid="radio-custom-student"></span>
+                Student
+              </label>
+              <label class="radio-label" data-testid="label-radio-staff">
+                <input type="radio" name="userType" value="staff" data-testid="radio-staff">
+                <span class="radio-custom" data-testid="radio-custom-staff"></span>
+                Staff
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="confirmPassword">Confirm Password</label>
-          <input type="password" id="confirmPassword" placeholder="Re-enter your password" required>
-          <div class="password-match" id="matchMessage"></div>
-        </div>
-        <button type="submit" id="signUpFormElement" class="auth-submit-btn">Create Account</button>
-        <div class="auth-switch">
-          <p>Already have an account? <a href="#" id="switchToSignIn">Sign in</a></p>
-        </div>
-        <div id="authMessage" class="auth-message"></div>
-      </form>
+
+          <div id="studentIdGroup" class="form-group id-input-group" style="display: none;" data-testid="formgroup-student-id">
+            <label for="studentId" data-testid="label-student-id">Student ID (11 digits)</label>
+            <input type="text" id="studentId" placeholder="24xxxxxxxxx" maxlength="11" data-testid="input-student-id">
+            <span class="input-hint" data-testid="hint-student-id">Example: 24101234567</span>
+          </div>
+
+          <div id="staffIdGroup" class="form-group id-input-group" style="display: none;" data-testid="formgroup-staff-id">
+            <label for="staffId" data-testid="label-staff-id">Staff ID</label>
+            <input type="text" id="staffId" placeholder="Enter your staff ID" data-testid="input-staff-id">
+          </div>
+
+          <div class="form-group" data-testid="formgroup-signup-email">
+            <label for="signUpEmail" data-testid="label-signup-email">Email Address</label>
+            <input type="email" id="signUpEmail" placeholder="your.email@aclc.edu.ph" required data-testid="input-signup-email">
+            <div id="emailAvailability" class="input-hint" data-testid="hint-email"></div>
+          </div>
+
+          <div class="form-group" data-testid="formgroup-signup-password">
+            <label for="signUpPassword" data-testid="label-signup-password">Password</label>
+            <input type="password" id="signUpPassword" placeholder="Create a strong password" required data-testid="input-signup-password">
+            <div class="password-strength" data-testid="container-password-strength">
+              <div class="strength-bar" data-testid="bar-password-strength"></div>
+              <div class="strength-text" data-testid="text-password-strength">Strength: <span id="strengthMessage" data-testid="text-strength-level">Weak</span></div>
+            </div>
+          </div>
+
+          <div class="form-group" data-testid="formgroup-confirm-password">
+            <label for="confirmPassword" data-testid="label-confirm-password">Confirm Password</label>
+            <input type="password" id="confirmPassword" placeholder="Re-enter your password" required data-testid="input-confirm-password">
+            <div id="matchMessage" class="password-match" data-testid="message-password-match"></div>
+          </div>
+
+          <button type="submit" class="auth-submit-btn" data-testid="button-signup-submit">Create Account</button>
+          
+          <div class="auth-switch" data-testid="container-switch-signin">
+            Already have an account? <a href="#" id="switchToSignIn" data-testid="link-switch-signin">Sign In</a>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
   <!-- Forgot Password Modal -->
-  <div id="forgotPasswordModal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-      <form id="forgotPasswordForm" class="auth-form">
-        <h2>Reset Password</h2>
-        <p style="text-align: center; margin-bottom: 20px; color: #666;">Enter your email address and we'll send you a link to reset your password.</p>
-        <div class="form-group">
-          <label for="resetEmail">Email Address</label>
-          <input type="email" id="resetEmail" placeholder="your.email@aclc.edu" required>
+  <div id="forgotPasswordModal" class="modal" data-testid="modal-forgot-password">
+    <div class="modal-content" data-testid="modal-forgot-password-content">
+      <span class="close-modal" data-testid="button-close-forgot-modal">&times;</span>
+      
+      <form id="forgotPasswordForm" class="auth-form" data-testid="form-forgot-password">
+        <h2 data-testid="heading-forgot-password">Reset Password</h2>
+        <p class="box-description" data-testid="text-forgot-password-description">Enter your email address and we'll send you a link to reset your password.</p>
+        
+        <div class="form-group" data-testid="formgroup-reset-email">
+          <label for="resetEmail" data-testid="label-reset-email">Email Address</label>
+          <input type="email" id="resetEmail" placeholder="your.email@aclc.edu.ph" required data-testid="input-reset-email">
         </div>
-        <button type="submit" class="auth-submit-btn">Send Reset Link</button>
-        <div class="auth-switch">
-          <p><a href="#" id="backToSignIn">Back to Sign In</a></p>
+
+        <button type="submit" class="auth-submit-btn" data-testid="button-send-reset">Send Reset Link</button>
+        
+        <div class="auth-message" id="forgotPasswordMessage" data-testid="message-forgot-password"></div>
+
+        <div class="auth-switch" data-testid="container-back-signin">
+          <a href="#" id="backToSignIn" data-testid="link-back-signin">Back to Sign In</a>
         </div>
-        <div id="forgotPasswordMessage" class="auth-message"></div>
       </form>
     </div>
   </div>
