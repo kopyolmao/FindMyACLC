@@ -11,204 +11,218 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Firebase SDK -->
- <script type="module">
-  import {
-    initializeApp
-  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-  import {
-    getAnalytics
-  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-  import {
-    getAuth,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut,
-    sendEmailVerification,
-    sendPasswordResetEmail
-  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc,
-    collection,
-    addDoc,
-    getDocs,
-    query,
-    where,
-    Timestamp
-  } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+  <script type="module">
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import {
+      getAnalytics
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut,
+      sendEmailVerification,
+      sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      where,
+      Timestamp,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBASqZ7VDxU_j6VEDN9pmhIDuDM1SU9qoI",
-    authDomain: "findmyaclc.firebaseapp.com",
-    projectId: "findmyaclc",
-    storageBucket: "findmyaclc.firebasestorage.app",
-    messagingSenderId: "351280538849",
-    appId: "1:351280538849:web:7b930e2e2885b40f4083a0",
-    measurementId: "G-ZH9V9KH3H2"
-  };
 
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyBASqZ7VDxU_j6VEDN9pmhIDuDM1SU9qoI",
+      authDomain: "findmyaclc.firebaseapp.com",
+      projectId: "findmyaclc",
+      storageBucket: "findmyaclc.appspot.com", // Corrected storage bucket
+      messagingSenderId: "351280538849",
+      appId: "1:351280538849:web:7b930e2e2885b40f4083a0",
+      measurementId: "G-ZH9V9KH3H2"
+    };
 
-  window.auth = auth;
-  window.db = db;
-  window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-  window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-  window.signOut = signOut;
-  window.sendEmailVerification = sendEmailVerification;
-  window.sendPasswordResetEmail = sendPasswordResetEmail;
-  window.setDoc = setDoc;
-  window.getDoc = getDoc;
-  window.doc = doc;
-  window.getDocs = getDocs;
-  window.collection = collection;
-  window.query = query;
-  window.where = where;
-  window.addDoc = addDoc;
-  window.Timestamp = Timestamp;
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-  onAuthStateChanged(auth, async (user) => {
-    const authButtons = document.querySelector('.auth-buttons');
-    const homepage = document.getElementById('homepage');
-    const studentDashboard = document.getElementById('studentDashboard');
-    const staffDashboard = document.getElementById('staffDashboard');
-    
-    if (user && user.emailVerified) {
-      homepage.style.display = 'none';
+    window.auth = auth;
+    window.db = db;
+    window.storage = storage;
+    window.ref = ref;
+    window.uploadBytes = uploadBytes;
+    window.getDownloadURL = getDownloadURL;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.signOut = signOut;
+    window.sendEmailVerification = sendEmailVerification;
+    window.sendPasswordResetEmail = sendPasswordResetEmail;
+    window.setDoc = setDoc;
+    window.getDoc = getDoc;
+    window.doc = doc;
+    window.getDocs = getDocs;
+    window.collection = collection;
+    window.query = query;
+    window.where = where;
+    window.addDoc = addDoc;
+    window.Timestamp = Timestamp;
+    window.orderBy = orderBy;
+
+
+    onAuthStateChanged(auth, async (user) => {
+      const authButtons = document.querySelector('.auth-buttons');
+      const homepage = document.getElementById('homepage');
+      const studentDashboard = document.getElementById('studentDashboard');
+      const staffDashboard = document.getElementById('staffDashboard');
       
-      let userData = null;
-      try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          userData = userDoc.data();
-          
-          const currentEmailVerified = userDoc.data().emailVerified;
-          if (currentEmailVerified !== user.emailVerified) {
-            await setDoc(doc(db, "users", user.uid), {
-              emailVerified: user.emailVerified
-            }, { merge: true });
+      if (user && user.emailVerified) {
+        homepage.style.display = 'none';
+        
+        let userData = null;
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            userData = userDoc.data();
+            
+            const currentEmailVerified = userDoc.data().emailVerified;
+            if (currentEmailVerified !== user.emailVerified) {
+              await setDoc(doc(db, "users", user.uid), {
+                emailVerified: user.emailVerified
+              }, { merge: true });
+            }
           }
+        } catch (error) {
+          console.warn("Could not access user data:", error.message);
         }
-      } catch (error) {
-        console.warn("Could not access user data:", error.message);
-      }
-      
-      const username = userData?.username || user.email.split('@')[0];
-      const userType = userData?.userType || 'student';
-      
-      authButtons.innerHTML = `
-        <span class="user-welcome" data-testid="text-user-welcome">Welcome, ${username}</span>
-        <button class="sign-out-btn" data-testid="button-signout">Sign Out</button>
-      `;
-      
-      if (userType === 'staff') {
+        
+        const username = userData?.username || user.email.split('@')[0];
+        const userType = userData?.userType || 'student';
+        
+        authButtons.innerHTML = `
+          <span class="user-welcome" data-testid="text-user-welcome">Welcome, ${username}</span>
+          <button class="sign-out-btn" data-testid="button-signout">Sign Out</button>
+        `;
+        
+        if (userType === 'staff') {
+          studentDashboard.style.display = 'none';
+          staffDashboard.style.display = 'block';
+          document.getElementById('staffDashboardWelcome').textContent = `Welcome, ${username}!`;
+          window.loadStaffDashboard();
+        } else {
+          staffDashboard.style.display = 'none';
+          studentDashboard.style.display = 'block';
+          document.getElementById('studentDashboardWelcome').textContent = `Welcome, ${username}!`;
+          window.loadStudentDashboard();
+        }
+        
+      } else if (user && !user.emailVerified) {
+        homepage.style.display = 'block';
         studentDashboard.style.display = 'none';
-        staffDashboard.style.display = 'block';
-        document.getElementById('staffDashboardWelcome').textContent = `Welcome, ${username}!`;
-        window.loadStaffDashboard();
-      } else {
         staffDashboard.style.display = 'none';
-        studentDashboard.style.display = 'block';
-        document.getElementById('studentDashboardWelcome').textContent = `Welcome, ${username}!`;
-        window.loadStudentDashboard();
+        authButtons.innerHTML = `
+          <span class="user-welcome" data-testid="text-email-not-verified">Email Not Verified</span>
+          <button class="sign-out-btn" data-testid="button-signout">Sign Out</button>
+        `;
+        
+        window.showVerificationReminder(user);
+      } else {
+        homepage.style.display = 'block';
+        studentDashboard.style.display = 'none';
+        staffDashboard.style.display = 'none';
+        authButtons.innerHTML = `
+          <button class="sign-in-btn" data-testid="button-signin">Sign In</button>
+          <button class="sign-up-btn" data-testid="button-signup">Sign Up</button>
+        `;
       }
       
-    } else if (user && !user.emailVerified) {
-      homepage.style.display = 'block';
-      studentDashboard.style.display = 'none';
-      staffDashboard.style.display = 'none';
-      authButtons.innerHTML = `
-        <span class="user-welcome" data-testid="text-email-not-verified">Email Not Verified</span>
-        <button class="sign-out-btn" data-testid="button-signout">Sign Out</button>
-      `;
-      
-      window.showVerificationReminder(user);
-    } else {
-      homepage.style.display = 'block';
-      studentDashboard.style.display = 'none';
-      staffDashboard.style.display = 'none';
-      authButtons.innerHTML = `
-        <button class="sign-in-btn" data-testid="button-signin">Sign In</button>
-        <button class="sign-up-btn" data-testid="button-signup">Sign Up</button>
-      `;
-    }
-    
-    document.querySelector('.sign-in-btn')?.addEventListener('click', window.showSignInModal);
-    document.querySelector('.sign-up-btn')?.addEventListener('click', window.showSignUpModal);
-    document.querySelector('.sign-out-btn')?.addEventListener('click', () => {
-      signOut(auth).then(() => console.log('User signed out'))
-        .catch((error) => console.error('Sign out error:', error));
-    });
-  });
-
-  window.showVerificationReminder = function(user) {
-    const verificationModal = document.createElement('div');
-    verificationModal.id = 'verificationModal';
-    verificationModal.className = 'modal';
-    verificationModal.innerHTML = `
-      <div class="modal-content verification-content" data-testid="modal-verification-content">
-        <h2 data-testid="heading-verify-email">Verify Your Email</h2>
-        <p data-testid="text-verification-instructions">We've sent a verification link to <strong>${user.email}</strong></p>
-        <p data-testid="text-verification-action">Please check your inbox and click the verification link to activate your account.</p>
-        <div class="verification-steps" data-testid="container-verification-steps">
-          <div class="step" data-testid="step-1">1. Check your email inbox</div>
-          <div class="step" data-testid="step-2">2. Find our verification email</div>
-          <div class="step" data-testid="step-3">3. Click the verification link</div>
-          <div class="step" data-testid="step-4">4. Return here and refresh the page</div>
-        </div>
-        <div class="verification-actions" data-testid="container-verification-actions">
-          <button id="resendVerification" class="auth-submit-btn" data-testid="button-resend-verification">Resend Verification Email</button>
-          <button id="closeVerification" class="auth-submit-btn secondary" data-testid="button-close-verification">Close</button>
-        </div>
-        <p class="verification-note" data-testid="text-verification-note">You need to verify your email to access the dashboard.</p>
-      </div>
-    `;
-    document.body.appendChild(verificationModal);
-    verificationModal.style.display = 'block';
-
-    document.getElementById('resendVerification').addEventListener('click', function() {
-      sendEmailVerification(user).then(() => {
-        alert('Verification email sent! Please check your inbox.');
-      }).catch((error) => {
-        alert('Error sending verification email: ' + error.message);
+      document.querySelector('.sign-in-btn')?.addEventListener('click', window.showSignInModal);
+      document.querySelector('.sign-up-btn')?.addEventListener('click', window.showSignUpModal);
+      document.querySelector('.sign-out-btn')?.addEventListener('click', () => {
+        signOut(auth).then(() => console.log('User signed out'))
+          .catch((error) => console.error('Sign out error:', error));
       });
     });
 
-    document.getElementById('closeVerification').addEventListener('click', function() {
-      verificationModal.remove();
-    });
+    window.showVerificationReminder = function(user) {
+      const verificationModal = document.createElement('div');
+      verificationModal.id = 'verificationModal';
+      verificationModal.className = 'modal';
+      verificationModal.innerHTML = `
+        <div class="modal-content verification-content" data-testid="modal-verification-content">
+          <h2 data-testid="heading-verify-email">Verify Your Email</h2>
+          <p data-testid="text-verification-instructions">We've sent a verification link to <strong>${user.email}</strong></p>
+          <p data-testid="text-verification-action">Please check your inbox and click the verification link to activate your account.</p>
+          <div class="verification-steps" data-testid="container-verification-steps">
+            <div class="step" data-testid="step-1">1. Check your email inbox</div>
+            <div class="step" data-testid="step-2">2. Find our verification email</div>
+            <div class="step" data-testid="step-3">3. Click the verification link</div>
+            <div class="step" data-testid="step-4">4. Return here and refresh the page</div>
+          </div>
+          <div class="verification-actions" data-testid="container-verification-actions">
+            <button id="resendVerification" class="auth-submit-btn" data-testid="button-resend-verification">Resend Verification Email</button>
+            <button id="closeVerification" class="auth-submit-btn secondary" data-testid="button-close-verification">Close</button>
+          </div>
+          <p class="verification-note" data-testid="text-verification-note">You need to verify your email to access the dashboard.</p>
+        </div>
+      `;
+      document.body.appendChild(verificationModal);
+      verificationModal.style.display = 'block';
 
-    verificationModal.addEventListener('click', function(event) {
-      if (event.target === verificationModal) {
+      document.getElementById('resendVerification').addEventListener('click', function() {
+        sendEmailVerification(user).then(() => {
+          alert('Verification email sent! Please check your inbox.');
+        }).catch((error) => {
+          alert('Error sending verification email: ' + error.message);
+        });
+      });
+
+      document.getElementById('closeVerification').addEventListener('click', function() {
         verificationModal.remove();
-      }
-    });
+      });
 
-    const checkVerificationInterval = setInterval(async () => {
-      try {
-        await user.reload();
-        
-        if (user.emailVerified) {
-          clearInterval(checkVerificationInterval);
+      verificationModal.addEventListener('click', function(event) {
+        if (event.target === verificationModal) {
           verificationModal.remove();
-          window.location.reload();
         }
-      } catch (error) {
-        console.error('Error checking verification status:', error);
-      }
-    }, 5000);
+      });
 
-    verificationModal.addEventListener('close', () => {
-      clearInterval(checkVerificationInterval);
-    });
-  };
-</script>
+      const checkVerificationInterval = setInterval(async () => {
+        try {
+          await user.reload();
+          
+          if (user.emailVerified) {
+            clearInterval(checkVerificationInterval);
+            verificationModal.remove();
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Error checking verification status:', error);
+        }
+      }, 5000);
+
+      verificationModal.addEventListener('close', () => {
+        clearInterval(checkVerificationInterval);
+      });
+    };
+  </script>
 </head>
 
 <body>
@@ -228,7 +242,6 @@
     </div>
   </header>
 
-  <!-- Homepage -->
   <main id="homepage" class="content" data-testid="page-homepage">
     <div class="content-box" data-testid="container-hero">
       <h2 data-testid="heading-hero">Lost Something? We'll Help You Find It</h2>
@@ -314,7 +327,6 @@
     </div>
   </main>
 
-  <!-- Student Dashboard -->
   <div id="studentDashboard" class="dashboard" style="display: none;" data-testid="page-student-dashboard">
     <div class="dashboard-header" data-testid="container-dashboard-header">
       <h1 id="studentDashboardWelcome" data-testid="heading-student-welcome">Welcome!</h1>
@@ -337,10 +349,10 @@
     </div>
 
     <div class="dashboard-actions" data-testid="container-student-actions">
-      <button class="action-button primary" onclick="reportItem('lost')" data-testid="button-report-lost">
+      <button class="action-button primary" onclick="showReportItemModal('lost')" data-testid="button-report-lost">
         Report Lost Item
       </button>
-      <button class="action-button secondary" onclick="reportItem('found')" data-testid="button-report-found">
+      <button class="action-button secondary" onclick="showReportItemModal('found')" data-testid="button-report-found">
         Report Found Item
       </button>
     </div>
@@ -349,7 +361,7 @@
       <div class="section-header" data-testid="container-section-header">
         <h2 data-testid="heading-recent-lost">Recent Lost Items</h2>
         <div class="search-bar" data-testid="searchbar-student">
-          <input type="text" id="studentSearchInput" placeholder="Search items..." data-testid="input-student-search">
+          <input type="text" id="studentSearchInput" placeholder="Search lost items..." data-testid="input-student-search">
           <button onclick="searchItems('student')" data-testid="button-student-search">Search</button>
         </div>
       </div>
@@ -364,7 +376,6 @@
     </div>
   </div>
 
-  <!-- Staff Dashboard -->
   <div id="staffDashboard" class="dashboard" style="display: none;" data-testid="page-staff-dashboard">
     <div class="dashboard-header" data-testid="container-staff-header">
       <h1 id="staffDashboardWelcome" data-testid="heading-staff-welcome">Staff Dashboard</h1>
@@ -412,12 +423,10 @@
     </div>
   </div>
 
-  <!-- Auth Modal -->
   <div id="authModal" class="modal" data-testid="modal-auth">
     <div class="modal-content" data-testid="modal-auth-content">
       <span class="close-modal" data-testid="button-close-modal">&times;</span>
       
-      <!-- Sign In Form -->
       <div id="signInForm" style="display: block;" data-testid="form-signin-container">
         <form id="signInFormElement" class="auth-form" data-testid="form-signin">
           <h2 data-testid="heading-signin">Sign In</h2>
@@ -446,7 +455,6 @@
         </form>
       </div>
 
-      <!-- Sign Up Form -->
       <div id="signUpForm" style="display: none;" data-testid="form-signup-container">
         <form id="signUpFormElement" class="auth-form" data-testid="form-signup">
           <h2 data-testid="heading-signup">Create Account</h2>
@@ -515,7 +523,6 @@
     </div>
   </div>
 
-  <!-- Forgot Password Modal -->
   <div id="forgotPasswordModal" class="modal" data-testid="modal-forgot-password">
     <div class="modal-content" data-testid="modal-forgot-password-content">
       <span class="close-modal" data-testid="button-close-forgot-modal">&times;</span>
@@ -536,6 +543,58 @@
         <div class="auth-switch" data-testid="container-back-signin">
           <a href="#" id="backToSignIn" data-testid="link-back-signin">Back to Sign In</a>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="reportItemModal" class="modal" data-testid="modal-report-item">
+    <div class="modal-content" data-testid="modal-report-item-content">
+      <span class="close-modal" data-testid="button-close-report-modal">&times;</span>
+      <form id="reportItemForm" class="auth-form" data-testid="form-report-item">
+        <h2 id="reportItemModalTitle" data-testid="heading-report-item">Report an Item</h2>
+        <input type="hidden" id="reportItemType" name="reportItemType">
+
+        <div class="form-group" data-testid="formgroup-item-name">
+          <label for="itemName" data-testid="label-item-name">Item Name</label>
+          <input type="text" id="itemName" placeholder="e.g., Black Backpack" required data-testid="input-item-name">
+        </div>
+
+        <div class="form-group" data-testid="formgroup-item-description">
+          <label for="itemDescription" data-testid="label-item-description">Description</label>
+          <textarea id="itemDescription" placeholder="Provide details like brand, color, identifying marks..." required rows="3" data-testid="input-item-description"></textarea>
+        </div>
+
+        <div class="form-group" data-testid="formgroup-item-category">
+          <label for="itemCategory" data-testid="label-item-category">Category</label>
+          <select id="itemCategory" required data-testid="select-item-category">
+            <option value="" disabled selected>Select a category</option>
+            <option value="electronics">Electronics</option>
+            <option value="books">Books & Notes</option>
+            <option value="clothing">Clothing & Accessories</option>
+            <option value="keys">Keys</option>
+            <option value="identification">IDs & Cards</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group" data-testid="formgroup-item-location">
+          <label for="itemLocation" data-testid="label-item-location">Location</label>
+          <input type="text" id="itemLocation" placeholder="e.g., Library, 2nd Floor" required data-testid="input-item-location">
+        </div>
+
+        <div class="form-group" data-testid="formgroup-item-date">
+          <label for="itemDate" data-testid="label-item-date">Date</label>
+          <input type="date" id="itemDate" required data-testid="input-item-date">
+        </div>
+        
+        <div class="form-group" data-testid="formgroup-item-image">
+          <label for="itemImage" data-testid="label-item-image">Upload Image (Optional)</label>
+          <input type="file" id="itemImage" accept="image/*" data-testid="input-item-image">
+          <img id="imagePreview" src="" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px; border-radius: var(--radius-md);" data-testid="image-preview"/>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" data-testid="button-report-submit">Submit Report</button>
+        <div class="auth-message" id="reportItemMessage" data-testid="message-report-item"></div>
       </form>
     </div>
   </div>
