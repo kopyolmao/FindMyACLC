@@ -711,4 +711,317 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById('studentSearchInput')?.addEventListener('keyup', () => searchItems('student'));
 
   console.log('Event listeners initialized successfully');
+  
+  // Initialize chatbot
+  initializeChatbot();
 });
+
+// AI Chatbot Functionality
+function initializeChatbot() {
+  const bubble = document.getElementById('chatbotBubble');
+  const chatWindow = document.getElementById('chatbotWindow');
+  const closeBtn = document.getElementById('chatbotClose');
+  const sendBtn = document.getElementById('chatbotSend');
+  const input = document.getElementById('chatbotInput');
+  const messagesContainer = document.getElementById('chatbotMessages');
+  const statusDot = document.getElementById('chatbotStatusDot');
+  const subtitle = document.getElementById('chatbotSubtitle');
+
+  let chatHistory = [];
+  let isOpen = false;
+
+  // Load chat history from sessionStorage
+  function loadChatHistory() {
+    const user = window.auth?.currentUser;
+    const storageKey = user ? `chatHistory_${user.uid}` : 'chatHistory_guest';
+    const saved = sessionStorage.getItem(storageKey);
+    if (saved) {
+      chatHistory = JSON.parse(saved);
+      chatHistory.forEach(msg => {
+        if (msg.role === 'user') {
+          addMessageToUI(msg.content, 'user', msg.timestamp);
+        } else if (msg.role === 'assistant') {
+          addMessageToUI(msg.content, 'ai', msg.timestamp);
+        }
+      });
+    }
+  }
+
+  // Save chat history to sessionStorage
+  function saveChatHistory() {
+    const user = window.auth?.currentUser;
+    const storageKey = user ? `chatHistory_${user.uid}` : 'chatHistory_guest';
+    sessionStorage.setItem(storageKey, JSON.stringify(chatHistory));
+  }
+
+  // Clear chat history
+  function clearChatHistory() {
+    const user = window.auth?.currentUser;
+    const storageKey = user ? `chatHistory_${user.uid}` : 'chatHistory_guest';
+    sessionStorage.removeItem(storageKey);
+    chatHistory = [];
+  }
+
+  // Update chatbot status based on auth
+  async function updateChatbotStatus() {
+    const user = window.auth?.currentUser;
+    
+    if (user && user.emailVerified) {
+      let userData = null;
+      try {
+        const userDoc = await getDoc(doc(window.db, "users", user.uid));
+        if (userDoc.exists()) {
+          userData = userDoc.data();
+        }
+      } catch (error) {
+        console.warn("Could not access user data for chatbot:", error.message);
+      }
+      
+      const username = userData?.username || user.email.split('@')[0];
+      const userType = userData?.userType || 'student';
+      
+      statusDot.classList.add('online');
+      subtitle.textContent = `Welcome, ${username}`;
+    } else {
+      statusDot.classList.remove('online');
+      subtitle.textContent = 'Guest Mode';
+    }
+  }
+
+  // Listen for auth state changes
+  if (window.auth) {
+    window.auth.onAuthStateChanged(async (user) => {
+      const wasLoggedIn = statusDot.classList.contains('online');
+      await updateChatbotStatus();
+      
+      // Clear guest chat when logging in
+      if (user && user.emailVerified && !wasLoggedIn) {
+        sessionStorage.removeItem('chatHistory_guest');
+        addSystemMessage('You are now logged in. Previous guest conversation cleared.');
+      }
+      
+      // Clear user chat when logging out
+      if (!user && wasLoggedIn) {
+        const oldKey = Array.from({length: sessionStorage.length}, (_, i) => sessionStorage.key(i))
+          .find(key => key && key.startsWith('chatHistory_') && key !== 'chatHistory_guest');
+        if (oldKey) sessionStorage.removeItem(oldKey);
+        addSystemMessage('You have been logged out. Previous conversation cleared.');
+      }
+    });
+  }
+
+  // Toggle chat window
+  bubble.addEventListener('click', () => {
+    if (!isOpen) {
+      chatWindow.style.display = 'flex';
+      bubble.style.display = 'none';
+      isOpen = true;
+      loadChatHistory();
+      updateChatbotStatus();
+      scrollToBottom();
+      input.focus();
+    }
+  });
+
+  closeBtn.addEventListener('click', () => {
+    chatWindow.style.display = 'none';
+    bubble.style.display = 'flex';
+    isOpen = false;
+  });
+
+  // Send message
+  async function sendMessage() {
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Disable input
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    // Add user message to UI
+    addMessageToUI(message, 'user');
+    chatHistory.push({
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString()
+    });
+    saveChatHistory();
+
+    // Clear input
+    input.value = '';
+    scrollToBottom();
+
+    // Show typing indicator
+    document.getElementById('chatbotTyping').style.display = 'flex';
+    scrollToBottom();
+
+    try {
+      // Prepare user info
+      const user = window.auth?.currentUser;
+      let userInfo = {
+        uid: null,
+        type: 'guest',
+        name: 'Guest'
+      };
+
+      if (user && user.emailVerified) {
+        try {
+          const userDoc = await getDoc(doc(window.db, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            userInfo = {
+              uid: user.uid,
+              type: userData.userType || 'student',
+              name: userData.username || user.email.split('@')[0]
+            };
+          }
+        } catch (error) {
+          console.warn("Could not fetch user data for AI:", error);
+        }
+      }
+
+      // Get Firestore data for logged-in users
+      let firestoreContext = null;
+      if (user && user.emailVerified) {
+        try {
+          const itemsQuery = query(collection(window.db, "items"), orderBy("reportedAt", "desc"));
+          const itemsSnapshot = await getDocs(itemsQuery);
+          const items = itemsSnapshot.docs.slice(0, 20).map(doc => ({
+            name: doc.data().name,
+            type: doc.data().type,
+            category: doc.data().category,
+            location: doc.data().location
+          }));
+          firestoreContext = {
+            recentItems: items
+          };
+        } catch (error) {
+          console.warn("Could not fetch Firestore data:", error);
+        }
+      }
+
+      // Prepare history for API (last 10 messages)
+      const historyForAPI = chatHistory.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Build system message
+      let systemMessage = "You are a helpful assistant for the ACLC Lost and Found system. ";
+      if (userInfo.type === 'guest') {
+        systemMessage += "The user is a guest. Explain features and guide them to sign in for full access. Do not mention specific database items.";
+      } else {
+        systemMessage += `The user is logged in as ${userInfo.name} (${userInfo.type}). Help them with their lost/found items.`;
+        if (firestoreContext && firestoreContext.recentItems.length > 0) {
+          systemMessage += ` Recent items in database: ${JSON.stringify(firestoreContext.recentItems)}. Use this to help answer questions.`;
+        }
+      }
+
+      // Call Cloudflare Worker API
+      const response = await fetch('https://findmyaclc.skysalvador2004.workers.dev', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: systemMessage + "\n\nUser: " + message,
+          user: userInfo,
+          history: historyForAPI
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const aiResponse = data.response || "Sorry, I couldn't generate a response.";
+
+      // Hide typing indicator
+      document.getElementById('chatbotTyping').style.display = 'none';
+
+      // Add AI response to UI
+      addMessageToUI(aiResponse, 'ai');
+      chatHistory.push({
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date().toISOString()
+      });
+      saveChatHistory();
+
+    } catch (error) {
+      console.error('Chatbot error:', error);
+      document.getElementById('chatbotTyping').style.display = 'none';
+      addMessageToUI('Sorry, I encountered an error. Please try again.', 'ai');
+    } finally {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+      scrollToBottom();
+    }
+  }
+
+  // Add message to UI
+  function addMessageToUI(text, type, timestamp = null) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chatbot-message ${type}`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'chatbot-message-content';
+    contentDiv.textContent = text;
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'chatbot-message-time';
+    timeDiv.textContent = formatTime(timestamp);
+    
+    messageDiv.appendChild(contentDiv);
+    messageDiv.appendChild(timeDiv);
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Add system message
+  function addSystemMessage(text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chatbot-system-message';
+    messageDiv.textContent = text;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+  }
+
+  // Format timestamp
+  function formatTime(timestamp) {
+    if (!timestamp) {
+      return 'Just now';
+    }
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString();
+  }
+
+  // Scroll to bottom
+  function scrollToBottom() {
+    setTimeout(() => {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 100);
+  }
+
+  // Event listeners
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Initialize status
+  updateChatbotStatus();
+}

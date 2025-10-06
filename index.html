@@ -599,6 +599,53 @@
     </div>
   </div>
 
+  <!-- AI Chatbot -->
+  <div id="chatbotBubble" class="chatbot-bubble" data-testid="button-chatbot-bubble">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 10H8.01M12 10H12.01M16 10H16.01M9 16H5C3.89543 16 3 15.1046 3 14V6C3 4.89543 3.89543 4 5 4H19C20.1046 4 21 4.89543 21 6V14C21 15.1046 20.1046 16 19 16H14L9 21V16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div id="chatbotWindow" class="chatbot-window" style="display: none;" data-testid="window-chatbot">
+    <div class="chatbot-header" data-testid="header-chatbot">
+      <div class="chatbot-header-info" data-testid="info-chatbot">
+        <span class="chatbot-status-dot" id="chatbotStatusDot" data-testid="status-dot"></span>
+        <div>
+          <div class="chatbot-title" data-testid="title-chatbot">ACLC Assistant</div>
+          <div class="chatbot-subtitle" id="chatbotSubtitle" data-testid="subtitle-chatbot">Guest Mode</div>
+        </div>
+      </div>
+      <button class="chatbot-close" id="chatbotClose" data-testid="button-close-chatbot">&times;</button>
+    </div>
+    
+    <div class="chatbot-messages" id="chatbotMessages" data-testid="messages-chatbot">
+      <div class="chatbot-message ai" data-testid="message-welcome">
+        <div class="chatbot-message-content" data-testid="content-welcome">
+          Hi! I'm your ACLC Lost & Found assistant. How can I help you today?
+        </div>
+        <div class="chatbot-message-time" data-testid="time-welcome">Just now</div>
+      </div>
+    </div>
+    
+    <div class="chatbot-typing" id="chatbotTyping" style="display: none;" data-testid="typing-indicator">
+      <span></span><span></span><span></span>
+    </div>
+    
+    <div class="chatbot-input-area" data-testid="input-area-chatbot">
+      <input 
+        type="text" 
+        id="chatbotInput" 
+        placeholder="Type your message..." 
+        data-testid="input-chatbot-message"
+      />
+      <button id="chatbotSend" data-testid="button-send-chatbot">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 
