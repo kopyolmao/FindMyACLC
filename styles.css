@@ -655,12 +655,16 @@ body {
   transition: all var(--transition-base);
   background: white;
   flex-shrink: 0;
+  display: inline-block;
+  box-sizing: border-box;
 }
 
 .radio-label input[type="radio"]:checked + .radio-custom {
   border-color: var(--primary);
   background: var(--primary);
   box-shadow: 0 0 0 4px hsla(210, 58%, 33%, 0.12);
+  position: relative;
+  transform: none; /* prevents oblong scaling */
 }
 
 .radio-label input[type="radio"]:checked + .radio-custom::after {
