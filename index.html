@@ -11,6 +11,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Rujnak's Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <script type="module">
     import {
       initializeApp
@@ -52,7 +57,7 @@
       apiKey: "AIzaSyBASqZ7VDxU_j6VEDN9pmhIDuDM1SU9qoI",
       authDomain: "findmyaclc.firebaseapp.com",
       projectId: "findmyaclc",
-      storageBucket: "findmyaclc.appspot.com", // Corrected storage bucket
+      storageBucket: "findmyaclc.appspot.com",
       messagingSenderId: "351280538849",
       appId: "1:351280538849:web:7b930e2e2885b40f4083a0",
       measurementId: "G-ZH9V9KH3H2"
@@ -312,15 +317,15 @@
       <h2 data-testid="heading-stats">System Statistics</h2>
       <div class="stats-container" data-testid="container-stats-grid">
         <div class="stat-item" data-testid="stat-items-returned">
-          <div class="stat-number" data-testid="stat-number-items">247</div>
+          <div class="stat-number" data-testid="stat-number-items">0</div>
           <div class="stat-label" data-testid="stat-label-items">Items Returned</div>
         </div>
         <div class="stat-item" data-testid="stat-success-rate">
-          <div class="stat-number" data-testid="stat-number-success">89%</div>
+          <div class="stat-number" data-testid="stat-number-success">0%</div>
           <div class="stat-label" data-testid="stat-label-success">Success Rate</div>
         </div>
         <div class="stat-item" data-testid="stat-active-users">
-          <div class="stat-number" data-testid="stat-number-users">500+</div>
+          <div class="stat-number" data-testid="stat-number-users">0</div>
           <div class="stat-label" data-testid="stat-label-users">Active Users</div>
         </div>
       </div>
@@ -433,7 +438,7 @@
           
           <div class="form-group" data-testid="formgroup-signin-email">
             <label for="signInEmail" data-testid="label-signin-email">Email Address</label>
-            <input type="email" id="signInEmail" placeholder="your.email@aclc.edu.ph" required data-testid="input-signin-email">
+            <input type="email" id="signInEmail" placeholder="Enter your email" required data-testid="input-signin-email">
           </div>
 
           <div class="form-group" data-testid="formgroup-signin-password">
@@ -494,7 +499,7 @@
 
           <div class="form-group" data-testid="formgroup-signup-email">
             <label for="signUpEmail" data-testid="label-signup-email">Email Address</label>
-            <input type="email" id="signUpEmail" placeholder="your.email@aclc.edu.ph" required data-testid="input-signup-email">
+            <input type="email" id="signUpEmail" placeholder="Enter your email" required data-testid="input-signup-email">
             <div id="emailAvailability" class="input-hint" data-testid="hint-email"></div>
           </div>
 
@@ -533,7 +538,7 @@
         
         <div class="form-group" data-testid="formgroup-reset-email">
           <label for="resetEmail" data-testid="label-reset-email">Email Address</label>
-          <input type="email" id="resetEmail" placeholder="your.email@aclc.edu.ph" required data-testid="input-reset-email">
+            <input type="email" id="resetEmail" placeholder="Enter your email" required data-testid="input-reset-email">
         </div>
 
         <button type="submit" class="auth-submit-btn" data-testid="button-send-reset">Send Reset Link</button>
@@ -589,8 +594,30 @@
         
         <div class="form-group" data-testid="formgroup-item-image">
           <label for="itemImage" data-testid="label-item-image">Upload Image (Optional)</label>
-          <input type="file" id="itemImage" accept="image/*" data-testid="input-item-image">
-          <img id="imagePreview" src="" alt="Image Preview" style="display: none; max-width: 100%; margin-top: 10px; border-radius: var(--radius-md);" data-testid="image-preview"/>
+          
+          <!-- Rujnak's Image Upload System -->
+          <div class="image-upload-section">
+            <input type="file" id="itemImage" accept="image/*" style="display: none;" data-testid="input-item-image">
+            
+            <div class="image-upload-buttons">
+              <button type="button" id="selectImageBtn" class="select-btn" data-testid="button-select-image">
+                Select Image
+              </button>
+              <button type="button" id="uploadImageBtn" class="upload-btn" data-testid="button-upload-image" style="display: none;">
+                Upload Image
+              </button>
+            </div>
+            
+            <!-- Square preview container -->
+            <div class="item-image-container" style="max-width: 200px; margin: 10px auto;">
+              <img id="imagePreview" src="" alt="Image Preview" style="display: none;" data-testid="image-preview"/>
+            </div>
+            
+            <progress id="uploadProgressBar" value="0" max="100" style="display: none;"></progress>
+            <div id="uploadProgressText" style="display: none;"></div>
+            
+            <div class="input-hint">Image will be cropped to square format in the item list</div>
+          </div>
         </div>
 
         <button type="submit" class="auth-submit-btn" data-testid="button-report-submit">Submit Report</button>
@@ -598,53 +625,93 @@
       </form>
     </div>
   </div>
-
-  <!-- AI Chatbot -->
-  <div id="chatbotBubble" class="chatbot-bubble" data-testid="button-chatbot-bubble">
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 10H8.01M12 10H12.01M16 10H16.01M9 16H5C3.89543 16 3 15.1046 3 14V6C3 4.89543 3.89543 4 5 4H19C20.1046 4 21 4.89543 21 6V14C21 15.1046 20.1046 16 19 16H14L9 21V16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </div>
-
-  <div id="chatbotWindow" class="chatbot-window" style="display: none;" data-testid="window-chatbot">
-    <div class="chatbot-header" data-testid="header-chatbot">
-      <div class="chatbot-header-info" data-testid="info-chatbot">
-        <span class="chatbot-status-dot" id="chatbotStatusDot" data-testid="status-dot"></span>
-        <div>
-          <div class="chatbot-title" data-testid="title-chatbot">ACLC Assistant</div>
-          <div class="chatbot-subtitle" id="chatbotSubtitle" data-testid="subtitle-chatbot">Guest Mode</div>
+  
+  <!-- AI Claim Verification Modal -->
+    <div id="claimVerificationModal" class="modal" data-testid="modal-claim-verification">
+      <div class="modal-content" data-testid="modal-claim-content">
+        <span class="close-modal" data-testid="button-close-claim-modal">&times;</span>
+        
+        <div class="auth-form" data-testid="form-claim-verification">
+          <h2 data-testid="heading-claim-verification">Verify Ownership</h2>
+          
+          <div class="chat-container" id="claimChatContainer" data-testid="container-chat-messages">
+            <!-- AI and user messages will appear here -->
+          </div>
+          
+          <div id="claimTypingIndicator" class="chatbot-typing" style="display: none;" data-testid="indicator-typing">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          
+          <div class="chatbot-input-area" data-testid="container-chat-input">
+            <input type="text" id="claimUserInput" placeholder="Type your answer..." data-testid="input-chat-response">
+            <button id="claimSendBtn" data-testid="button-send-response">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+          
+          <div class="verification-progress" data-testid="container-verification-progress" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress-fill" id="verificationProgressBar"></div>
+            </div>
+            <div class="progress-text" id="verificationProgressText" data-testid="text-progress">Verification: 0%</div>
+          </div>
+          
+          <div class="auth-message" id="claimMessage" data-testid="message-claim-status"></div>
+          
+          <!--div class="download-section" style="text-align: center; margin-top: 20px; display: none;" id="downloadSection" data-testid="container-download"-->
+            <!--button id="downloadYmlBtn" class="auth-submit-btn secondary" data-testid="button-download-yml">Download Verification Log</button-->
+          <!--/div-->
         </div>
       </div>
-      <button class="chatbot-close" id="chatbotClose" data-testid="button-close-chatbot">&times;</button>
     </div>
-    
-    <div class="chatbot-messages" id="chatbotMessages" data-testid="messages-chatbot">
-      <div class="chatbot-message ai" data-testid="message-welcome">
-        <div class="chatbot-message-content" data-testid="content-welcome">
-          Hi! I'm your ACLC Lost & Found assistant. How can I help you today?
-        </div>
-        <div class="chatbot-message-time" data-testid="time-welcome">Just now</div>
-      </div>
-    </div>
-    
-    <div class="chatbot-typing" id="chatbotTyping" style="display: none;" data-testid="typing-indicator">
-      <span></span><span></span><span></span>
-    </div>
-    
-    <div class="chatbot-input-area" data-testid="input-area-chatbot">
-      <input 
-        type="text" 
-        id="chatbotInput" 
-        placeholder="Type your message..." 
-        data-testid="input-chatbot-message"
-      />
-      <button id="chatbotSend" data-testid="button-send-chatbot">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  
+    <!-- AI Chatbot -->
+    <div id="chatbotBubble" class="chatbot-bubble">
+      <div class="chatbot-bubble-inner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
         </svg>
-      </button>
+      </div>
     </div>
-  </div>
+    
+    <div id="chatbotWindow" class="chatbot-window" style="display: none;">
+      <div class="chatbot-header">
+        <div class="chatbot-header-info">
+          <div id="chatbotStatusDot" class="chatbot-status-dot online"></div>
+          <div>
+            <div class="chatbot-title">Lost & Found Assistant</div>
+            <div id="chatbotSubtitle" class="chatbot-subtitle">Guest Mode</div>
+          </div>
+        </div>
+        <button id="chatbotClose" class="chatbot-close">×</button>
+      </div>
+      
+      <div id="chatbotMessages" class="chatbot-messages">
+        <!-- Messages will be added here dynamically -->
+      </div>
+      
+      <div id="chatbotTyping" class="chatbot-typing" style="display: none;">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      
+      <div class="chatbot-input-area">
+        <input type="text" id="chatbotInput" placeholder="Ask about lost and found items..." />
+        <button id="chatbotSend">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </div>
+    </div>
 
   <script src="script.js"></script>
 </body>

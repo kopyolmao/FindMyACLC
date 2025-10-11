@@ -2083,3 +2083,368 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Image Upload Styles */
+.image-upload-section {
+    margin: 20px 0;
+    padding: 20px;
+    border: 2px dashed #e9ecef;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.image-upload-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.upload-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.upload-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.select-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#imagePreview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    margin: 10px auto;
+    display: none;
+}
+
+#uploadProgressBar {
+    width: 100%;
+    margin: 10px 0;
+    display: none;
+}
+
+#uploadProgressText {
+    font-size: 14px;
+    color: #6c757d;
+    display: none;
+}
+
+.upload-success {
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Item Image Styles */
+.item-image-container {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.item-image {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.item-image:hover {
+    transform: scale(1.05);
+}
+
+/* ============================================
+   SQUARE IMAGE CONTAINER FOR ITEM CARDS
+   ============================================ */
+
+.item-image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    margin: 10px 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-light);
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    transition: transform var(--transition-base);
+}
+
+.item-image:hover {
+    transform: scale(1.05);
+}
+
+/* Image Upload Section Styles */
+.image-upload-section {
+    margin: 15px 0;
+    padding: 15px;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    background: var(--surface-elevated);
+}
+
+.image-upload-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.upload-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-weight: 600;
+}
+
+.upload-btn:hover:not(:disabled) {
+    background: hsl(142, 71%, 38%);
+    transform: translateY(-2px);
+}
+
+.upload-btn:disabled {
+    background: var(--text-disabled);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.select-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-weight: 600;
+}
+
+.select-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+#uploadProgressBar {
+    width: 100%;
+    margin: 10px 0;
+    display: none;
+    border-radius: var(--radius-full);
+    height: 8px;
+}
+
+#uploadProgressBar::-webkit-progress-bar {
+    background: var(--border);
+    border-radius: var(--radius-full);
+}
+
+#uploadProgressBar::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--success), hsl(142, 71%, 55%));
+    border-radius: var(--radius-full);
+    transition: width var(--transition-slow);
+}
+
+#uploadProgressText {
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: none;
+    font-weight: 600;
+}
+
+.upload-success {
+    color: var(--success) !important;
+    font-weight: 700;
+}
+
+/* ============================================
+   CLAIM VERIFICATION STYLES
+   ============================================ */
+
+.chat-container {
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+  background: var(--surface-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.claim-message {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 85%;
+  animation: slide-in-bottom 0.3s ease both;
+}
+
+.claim-message.ai {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.claim-message.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.claim-message-content {
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.claim-message.ai .claim-message-content {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  border-radius: 18px 18px 18px 4px;
+}
+
+.claim-message.user .claim-message-content {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  border-radius: 18px 18px 4px 18px;
+}
+
+.claim-message-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+.verification-progress {
+  margin: 20px 0;
+  animation: fade-in 0.5s ease both;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), hsl(142, 71%, 55%));
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+  width: 0%;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: center;
+}
+
+.verification-score {
+  text-align: center;
+  padding: 15px;
+  background: var(--surface-elevated);
+  border-radius: var(--radius-lg);
+  margin: 15px 0;
+  border: 1px solid var(--border-light);
+  animation: scale-up-center 0.5s ease both;
+}
+
+.score-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+.score-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.verification-complete {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, hsl(142, 71%, 96%) 0%, hsl(142, 71%, 92%) 100%);
+  border-radius: var(--radius-lg);
+  margin: 15px 0;
+  border: 2px solid hsl(142, 71%, 85%);
+  animation: bounce-top 0.6s both;
+}
+
+.verification-complete h3 {
+  color: var(--success);
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.verification-complete p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Enhanced typing indicator for claim verification */
+.claim-typing {
+  padding: 15px 20px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  animation: slide-in-blurred-left 0.4s cubic-bezier(0.230, 1.000, 0.320, 1.000) both;
+}
+
+.claim-typing span {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: bounce-top 1.2s infinite;
+}
+
+.claim-typing span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.claim-typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.claim-typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
