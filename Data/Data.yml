@@ -1,0 +1,205 @@
+ToDoList:
+    App: "Website"
+    Title: "FindMyACLC"
+    Files:
+        html:
+            index:
+                "check auth cache":
+                    true:
+                        "check role":
+                            student: "redirect to student-dashboard.html"
+                            staff: "redirect to staff-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: "redirect to homepage.html"
+            homepage:
+                "check auth cache":
+                    true:
+                        "check role":
+                            student: "redirect to student-dashboard.html"
+                            staff: "redirect to staff-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: null
+                Login Button: "redirect to login.html"
+                SignUp Button: "redirect to signup.html"
+            login:
+                "check auth cache":
+                    true:
+                        "check role":
+                            student: "redirect to student-dashboard.html"
+                            staff: "redirect to staff-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: null
+                Email InputField: "Real-time valid email format validation (any type of emails)"
+                Password InputField: "Password visibility toggle (show/hide)"
+                SignIn Button:
+                    "Loading State"
+                    "Authenticate user with Firebase Auth":
+                        success:
+                            "save auth and role cache"
+                            "redirect to (role)-dashboard.html"
+                        failed: "display firebase error user friendly"
+                Forgot Password Button: "redirect to password-reset.html"
+                Dont Have An Account Button: "redirect to signup.html"
+            signup:
+                "check auth cache":
+                    true:
+                        "check role":
+                            student: "redirect to student-dashboard.html"
+                            staff: "redirect to staff-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: null
+                Role SelectionField:
+                    "student"
+                    "staff"
+                    "admin"
+                Username InputField:
+                    "Check Firestore for existing username"
+                    "Real-time validation (3+ characters)""
+                    If exists:
+                        "red field"
+                        "error message"
+                    If available:
+                        "green field"
+                        "success message"
+                Email InputField:
+                    "Real-time valid email format validation (any type of emails)"
+                    "Check Firebase Auth for existing email"
+                    If exists:
+                        "red field"
+                        "error message"
+                    If available:
+                        "green field"
+                        "success message"
+                Password InputField:
+                    "Password visibility toggle (show/hide)"
+                    "Real-time strength validation"
+                    "Show strength indicator"
+                    Requirements: "uppercase, lowercase, number, special char (8+ chars)"
+                Confirm Pass InputField:
+                    "Real-time match validation"
+                    If mismatch:
+                        "red field"
+                        "error message"
+                    If match:
+                        "green field"
+                        "success message"
+                SignUp Button:
+                    "Verify all fields completed and valid"
+                    "Show loading state"
+                    "Submit credentials to Firebase Auth"
+                    If Firebase success:
+                        Create user profile in Firestore:
+                            - username, email, ID, role, createdAt
+                    If Firestore success:
+                        Redirect based on role:
+                            student: "student-dashboard.html"
+                            staff: "staff-dashboard.html"
+                            admin: "admin-dashboard.html"
+                        "Save auth & role in cache"
+                    If any error:
+                        "Display user-friendly error message"
+                Already Have An Account Button: "redirect to login.html"
+            password-reset:
+                "check auth cache":
+                    true:
+                        "check role":
+                            student: "redirect to student-dashboard.html"
+                            staff: "redirect to staff-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: null
+                Email InputField:
+                    "Real-time valid email format validation (any type of emails)"
+                    "Check Firebase Auth for existing email"
+                    "return user friendly success/fail message"
+                Send Reset Email Button:
+                    "Trigger Firebase password reset"
+                    "Show user friendly success/failed message"
+                    "Redirect to login.html after 3 seconds"
+                Back to Login Button:
+                    "redirect to login.html"
+            student-dashboard:
+                "check auth cache":
+                    true:
+                        "check role":
+                            staff: "redirect to staff-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: null
+                User Profile IconButton:
+                    "display Username"
+                    "display ID"
+                    "redirect to user-profile.html"
+                Filter SearchBar:
+                    "filters and display by item name"
+                Overall Lost Items Section:
+                    "cards with status":
+                        "display item name"
+                        "display public description"
+                        "display date lost"
+                        "display status"
+                        Contact Owner Button: "redirect user to posters email"
+                Overall Found Items Section:
+                    "cards with status":
+                        "display item name"
+                        "display public description"
+                        "display date lost"
+                        "display status"
+                        Claim Button: "redirect to claim-item.html"
+                Report Lost Item Button: "redirect to report-lost.html"
+                Report Found Item Button: "redirect to report-found.html"
+            staff-dashboard:
+                "check auth cache":
+                    true:
+                        "check role":
+                            student: "redirect to student-dashboard.html"
+                            admin: "redirect to admin-dashboard.html"
+                    false: null
+            admin-dashboard:
+                "check auth cache":
+                    true:
+                        "check role":
+                            staff: "redirect to staff-dashboard.html"
+                            student: "redirect to student-dashboard.html"
+                    false: null
+            user-profile:
+                "check auth cache":
+                    true: null
+                    false: "redirect to login.html"
+                "Display Username"
+                "Display ID"
+                Dropdown:
+                    "filter display (user) Found Items post":
+                        "cards with status":
+                            "display item name"
+                            "display escription"
+                            "display date lost"
+                            "display status"
+                            Claim Button: "redirect to claim-item.html"
+                    "filter display (user) Lost Items post"
+                        "cards with status":
+                            "display item name"
+                            "display description"
+                            "display date lost"
+                            "display status"
+                            Contact User Button: "redirect user to posters email"
+                Report Lost Item Button: "redirect to report-lost.html"
+                Report Found Item Button: "redirect to report-found.html"
+            report-lost:
+                form:
+                    "Item name"
+                    "description"
+                    "location"
+                    Submit Button:
+                        "generate unique item ID"
+                        "Send data to firestore"
+            report-found:
+                form:
+                    "Item name"
+                    "description"
+                    "location"
+                    "date found"
+                    Submit Button:
+                        "generate unique item ID"
+                        "Send data to firestore"
+            claim-item:
+        css:
+        js:
